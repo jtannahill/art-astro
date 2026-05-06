@@ -23,6 +23,7 @@ const canonical = canonicalPath
     <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
     <meta name="robots" content="noindex, nofollow" />
+    <slot name="head" />
   </head>
   <body>
     <header class="hdr">

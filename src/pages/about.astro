@@ -1,0 +1,440 @@
+---
+import Base from "../layouts/Base.astro";
+import { FAQ } from "../data/faq.ts";
+
+const description =
+  "How generative weather art is made - real atmospheric data, 54 global scan points, AI interpretation through 16 artist lenses (7 with custom FLUX.1-dev LoRA fine-tunes), natural scarcity from unrepeatable weather events. By James Tannahill.";
+
+// Strip HTML for FAQ schema text — search engines accept inline HTML in
+// answers but stripping keeps the structured data tidy and the visible
+// accordion is the source of truth for the rich version.
+function stripHtml(s: string) {
+  return s
+    .replace(/<[^>]+>/g, "")
+    .replace(/&mdash;/g, "—")
+    .replace(/&amp;/g, "&")
+    .replace(/&deg;/g, "°")
+    .replace(/&times;/g, "×")
+    .replace(/&eacute;/g, "é")
+    .replace(/&uuml;/g, "ü");
+}
+
+const aboutSchema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  name: "About art.jt",
+  url: "https://art.jamestannahill.com/about/",
+  mainEntity: {
+    "@type": "Person",
+    name: "James Tannahill",
+    url: "https://jamestannahill.com",
+    email: "art@jamestannahill.com",
+    jobTitle: "Generative Artist & Technologist",
+    knowsAbout: [
+      "Generative Art",
+      "Weather Data Visualization",
+      "Abstract Expressionism",
+      "AWS",
+      "AI/ML",
+    ],
+    sameAs: ["https://jamestannahill.com", "https://github.com/jtannahill"],
+  },
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: stripHtml(a) },
+  })),
+};
+---
+
+<Base title="About - art.jt" description={description} canonicalPath="/about/">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(aboutSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  </Fragment>
+
+  <h1>About</h1>
+
+  <nav class="about-nav">
+    <a href="#work">The Work</a>
+    <a href="#system">The System</a>
+    <a href="#method">How It's Made</a>
+    <a href="#artist">The Artist</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+
+  <p class="lede">
+    The atmosphere is the oldest artist on Earth. It has been painting since
+    before there were eyes to see it &mdash; sculpting light through ice
+    crystals, dragging color across horizons, compressing entire landscapes
+    into a single hour of sky. This project is an attempt to listen to what
+    it's making.
+  </p>
+
+  <h2 id="work">The Work</h2>
+
+  <p>
+    Every day, fifty-four points across the planet are sampled for what the
+    atmosphere is actually doing &mdash; not what it looks like on a forecast,
+    but its raw physical state. Pressure gradients steep enough to bend trees.
+    Winds crossing open water with nothing to slow them down. Temperature
+    anomalies where the air is ten degrees warmer or colder than it should
+    be. The ten most extreme conditions become source material for original
+    artwork.
+  </p>
+
+  <p>
+    The data passes through the aesthetic lens of sixteen artists who
+    understood that abstraction is not the absence of meaning but its
+    distillation. Sam Francis knew that empty space is as charged as color.
+    Rothko proved that two rectangles can hold grief. Frankenthaler showed
+    that letting paint find its own path is an act of trust. Hilma af Klint
+    painted what she believed was invisible.
+    <a href="https://lesleytannahill.com" target="_blank" rel="noopener">
+      Lesley Tannahill
+    </a>
+    builds palimpsests where every mark remembers the marks beneath it.
+    These sensibilities are not styles to imitate &mdash; they are ways of
+    seeing that transform the same pressure reading into radically different
+    compositions.
+  </p>
+
+  <p>
+    The result is a growing archive of the planet's most volatile moments,
+    translated into color and form. No two pieces share the same atmospheric
+    conditions. None can be repeated. Each one is a fossil of weather that
+    no longer exists.
+  </p>
+
+  <h2 id="system">The System</h2>
+
+  <p>
+    The pipeline runs at dawn UTC. Weather flows in from the
+    <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo API</a>
+    (NOAA's GFS model) and is scored on a composite index &mdash; pressure
+    anomaly weighted heaviest, then wind, temperature deviation, precipitation,
+    humidity. The highest-scoring conditions are sent to a generative model
+    that interprets the atmospheric data as original digital artwork. There
+    are three rendering paths: most artists go through Flux 1.1 Pro from a
+    descriptive text prompt; seven artists (Lesley Tannahill, Sam Francis,
+    Hilma af Klint, Joan Mitchell, Willem de Kooning, Helen Frankenthaler,
+    Gerhard Richter) route through custom FLUX.1-dev LoRA fine-tunes trained
+    on their own canvas reproductions; and a parallel Claude SVG renderer
+    produces a vector version of every piece. Every piece is rendered in
+    seven possible canvas formats, from square to panoramic, chosen by the
+    conditions themselves. Everything is archived permanently.
+  </p>
+
+  <p>
+    A parallel system extracts color palettes from Copernicus Sentinel-2
+    satellite imagery &mdash; the actual colors of Earth as seen from orbit.
+    Deserts, glaciers, river deltas, volcanic islands. A seasonal record of
+    what the planet looks like from 786 kilometers up.
+  </p>
+
+  <h2 id="method">How the Art Is Made</h2>
+
+  <h3>Artistic Interpretation, Not Imitation</h3>
+
+  <p>
+    For most of the artists in the system, no canvas was ever fed to the
+    model. Their understanding comes from art criticism, exhibition catalogs,
+    and the public discourse around their practices &mdash; the same way a
+    human art student learns by reading about artists before they ever pick
+    up a brush. Each artist is described to the model in a few sentences
+    that capture their visual philosophy: Rothko's luminous floating
+    rectangles, Kusama's obsessive dot fields, Mondrian's primary-color
+    grid logic. The model doesn't see their paintings. It reads their ideas,
+    then writes SVG code or composes a Flux 1.1 Pro prompt from scratch.
+    The atmospheric data is the only input. The artist's sensibility is
+    the lens.
+  </p>
+
+  <p>
+    A small number of artists &mdash; currently
+    <a href="/artist/lesley_tannahill/">Lesley Tannahill</a>,
+    <a href="/artist/sam_francis/">Sam Francis</a>,
+    <a href="/artist/hilma_af_klint/">Hilma af Klint</a>,
+    <a href="/artist/joan_mitchell/">Joan Mitchell</a>,
+    <a href="/artist/willem_de_kooning/">Willem de Kooning</a>,
+    <a href="/artist/helen_frankenthaler/">Helen Frankenthaler</a>, and
+    <a href="/artist/gerhard_richter/">Gerhard Richter</a> &mdash; take a
+    different path. For these, custom <strong>FLUX.1-dev LoRA</strong>
+    fine-tunes were trained on small sets of hand-curated canvas
+    reproductions, each captioned with title, medium, dimensions, and year.
+    The LoRA is a compact set of trainable weights that overlays the much
+    larger frozen FLUX.1-dev base, teaching it that artist's specific visual
+    language without retraining the whole model. Each of those artists' pages
+    carries a "Model &amp; Methodology" block documenting the training set,
+    hyperparameters, and provenance.
+  </p>
+
+  <h3>Weather Data: 54 Points, 6 Variables</h3>
+
+  <p>
+    Every run samples 54 points across 10 latitude bands, from 70&deg;N
+    (Arctic) to 60&deg;S (Subantarctic). At each point, six atmospheric
+    variables are measured at the current hour:
+  </p>
+
+  <div class="vars-grid">
+    <span>Sea-level pressure (Pa)</span>
+    <span>&rarr; Density, weight, visual mass</span>
+    <span>Wind speed &amp; direction</span>
+    <span>&rarr; Dynamic energy, directional flow</span>
+    <span>Temperature (K)</span>
+    <span>&rarr; Color temperature, saturation</span>
+    <span>Temperature anomaly</span>
+    <span>&rarr; How far from the expected &mdash; the drama</span>
+    <span>Relative humidity (%)</span>
+    <span>&rarr; Atmospheric moisture, softness</span>
+    <span>Precipitation (kg/m&sup2;)</span>
+    <span>&rarr; Intensity, texture</span>
+  </div>
+
+  <p>
+    The composite visual interest score weights these: pressure anomaly
+    (30%), wind (25%), temperature deviation (20%), precipitation (15%),
+    humidity (10%). The top 10 scorers &mdash; with at least 15&deg; of
+    geographic separation to ensure diversity &mdash; become the day's
+    artwork subjects.
+  </p>
+
+  <h3>Why GFS?</h3>
+
+  <p>
+    The weather data comes from NOAA's
+    <a
+      href="https://www.ncei.noaa.gov/products/weather-climate-models/global-forecast"
+      target="_blank"
+      rel="noopener"
+    >
+      Global Forecast System (GFS)
+    </a>, a 0.25&deg; resolution atmospheric model updated every six hours.
+    GFS was chosen over alternatives like ECMWF IFS (higher accuracy but
+    rate-limited), ICON (better European resolution), or HRRR (3km US-only)
+    because it offers the best tradeoff for this project: free global
+    coverage at resolution sufficient for macro-scale weather drama, with
+    reliable hourly data across all 54 scan points simultaneously. The art
+    interprets continental-scale atmospheric patterns &mdash; pressure
+    systems spanning oceans, temperature fronts crossing mountain ranges
+    &mdash; where GFS excels. The <code>gfs_seamless</code> variant blends
+    forecast and analysis data for best-available current conditions.
+  </p>
+
+  <h3>Quality Scoring</h3>
+
+  <p>
+    After each artwork is generated and rendered to PNG, an AI art critic
+    evaluates it on four dimensions: composition, color harmony, complexity,
+    and emotional impact. Each piece receives a quality score from 1 to 10.
+    This score feeds into the archive, influences print pricing, and helps
+    surface the strongest work. The critic sees only the final image &mdash;
+    it has no access to the weather data or artist prompt that produced it.
+  </p>
+
+  <h3>Weather Forecasting</h3>
+
+  <p>
+    Every evening at 20:00 UTC, a separate system scans the 24-hour GFS
+    forecast for all 54 scan points, scoring each for predicted visual
+    drama using the same composite formula. This produces a ranked list of
+    tomorrow's most promising atmospheric conditions &mdash; a weather drama
+    forecast that anticipates where the most striking art will come from
+    before the pipeline runs.
+  </p>
+
+  <h3>Dynamic Pricing</h3>
+
+  <p>
+    Print prices are not static. Each artwork's price reflects three
+    signals: the quality score from the AI critic (higher-rated work
+    commands a premium), the rarity of the weather conditions that produced
+    it (extreme atmospheric events are scarcer), and scarcity (as editions
+    sell, remaining prints increase in value). The base price can increase
+    up to 2&times; for exceptional pieces born from rare weather.
+  </p>
+
+  <h3>Natural Scarcity</h3>
+
+  <p>
+    Every artwork is generated from a one-time atmospheric event &mdash; a
+    specific combination of pressure, wind, temperature, and precipitation
+    at a specific location and moment. That weather will never occur again.
+    Unlike digital assets where scarcity is manufactured by capping supply,
+    the scarcity here is physical: the atmosphere produced it once, and it's
+    gone. The artwork is a fossil of a moment that no longer exists.
+  </p>
+
+  <p>
+    This is closer to photography than to minting &mdash; capturing
+    something real, unrepeatable, and time-bound. The atmospheric data is
+    archived alongside every piece, timestamped and verifiable against
+    NOAA's public records. The weather happened. The art it produced is the
+    only one of its kind. Limited edition prints (5 per size) add a physical
+    layer of scarcity on top of a natural one. When the last print of a
+    piece sells, that's it &mdash; the weather is gone, the edition is
+    closed, and the work exists only in the hands of its collectors.
+  </p>
+
+  <h2 id="artist">The Artist</h2>
+
+  <p>
+    I'm
+    <a href="https://jamestannahill.com" target="_blank" rel="noopener">
+      James Tannahill
+    </a>. I grew up staring at maps the way other people stared at posters
+    &mdash; tracing coastlines, memorizing the shapes of countries I'd never
+    visit, trying to understand how a flat sheet of paper could contain an
+    ocean. That impulse never went away. It just found new material.
+  </p>
+
+  <p>
+    Weather is the map I can't finish reading. It is planetary-scale,
+    constantly rewriting itself, and fundamentally invisible at any useful
+    resolution. You can stand in a storm and still only experience a pinhole
+    of what the system is doing. This project is my way of seeing more of
+    it &mdash; using the language of the painters who taught me that seeing
+    is not passive, that abstraction is a form of attention, and that the
+    most honest response to something overwhelming is to let it move through
+    you and onto the canvas.
+  </p>
+
+  <p>
+    The data is real. The locations are real. The weather happened. What
+    the machine makes of it &mdash; and what you make of that &mdash; is
+    where the art lives.
+  </p>
+
+  <h2 id="faq">FAQ</h2>
+
+  <div class="faq">
+    {
+      FAQ.map(({ q, a }) => (
+        <details>
+          <summary>{q}</summary>
+          <p set:html={a} />
+        </details>
+      ))
+    }
+  </div>
+
+  <div class="cta">
+    <p>
+      Limited edition prints on Hahnem&uuml;hle German Etching available on
+      every artwork page. For commercial licensing, commissions, or
+      collaboration: <a href="mailto:art@jamestannahill.com">art@jamestannahill.com</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  h1 { font-size: 2.5rem; margin: 0 0 1rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; letter-spacing: -0.01em; }
+  h3 {
+    font-size: 1.05rem;
+    color: var(--color-accent);
+    margin: 1.5rem 0 0.75rem;
+    font-weight: 500;
+  }
+  p { color: #bbb; line-height: 1.8; margin: 0 0 1.5rem; }
+  p.lede {
+    font-size: 1.15rem;
+    color: #ddd;
+    line-height: 1.9;
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+  code {
+    color: var(--color-accent);
+    background: #1a1a2e;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+  }
+
+  .about-nav {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #222;
+    flex-wrap: wrap;
+  }
+  .about-nav a {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .about-nav a:hover { color: var(--color-accent); }
+  @media (max-width: 768px) {
+    .about-nav { gap: 1rem; }
+    .about-nav a { font-size: 0.8rem; }
+  }
+
+  .vars-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 2rem;
+    color: #999;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
+  @media (max-width: 640px) {
+    .vars-grid { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  .faq details {
+    margin-bottom: 1rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    background: #111;
+  }
+  .faq summary {
+    padding: 1rem;
+    cursor: pointer;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    list-style: none;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after {
+    content: "+";
+    float: right;
+    color: var(--color-muted);
+    font-weight: 400;
+    transition: transform 0.2s;
+  }
+  .faq details[open] summary::after { content: "−"; }
+  .faq p {
+    padding: 0 1rem 1rem;
+    color: #bbb;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .cta {
+    margin-top: 2.5rem;
+    padding: 1.2rem;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+  }
+  .cta p {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+</style>
