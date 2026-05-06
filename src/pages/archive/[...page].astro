@@ -20,6 +20,7 @@ interface RunGroup {
 }
 
 interface PieceMeta {
+  run_id: string;
   slug: string;
   artist: string;
   rationale: string;
@@ -51,6 +52,7 @@ export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
       date: items[0].data.date || run_id.slice(0, 10),
       pieces: items
         .map((w) => ({
+          run_id: w.data.run_id,
           slug: w.data.slug,
           artist: w.data.artist,
           rationale: w.data.rationale,
@@ -151,6 +153,7 @@ function fmtRunDate(run_id: string) {
                   alt={`${p.slug} (${fmtArtist(p.artist)})`}
                   loading="lazy"
                   decoding="async"
+                  style={`view-transition-name: art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")};`}
                 />
               </div>
               <div class="card-body">

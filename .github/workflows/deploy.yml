@@ -34,6 +34,12 @@ jobs:
 
       - run: npm ci
 
+      - name: type-check
+        run: npx astro check
+        # `astro check` runs Astro's TypeScript validator across .astro
+        # files. Failing here keeps a broken build out of S3.
+        continue-on-error: false
+
       - name: build (pulls DynamoDB → astro build)
         run: npm run build
 

@@ -7,14 +7,11 @@
  * (it's exposed in every page's HTML there too).
  */
 import { getCollection } from "astro:content";
+import { PUBLIC_MAPBOX_TOKEN } from "astro:env/client";
 import Base from "../../layouts/Base.astro";
 
 const PROD = "https://art.jamestannahill.com";
-
-// Public client-side Mapbox token. GitHub's secret-scanning rule blocks
-// pk.* tokens from being committed even though they're meant to ship in
-// browser bundles, so we read it from a build-time env var instead.
-const MAPBOX_TOKEN = import.meta.env.PUBLIC_MAPBOX_TOKEN ?? "";
+const MAPBOX_TOKEN = PUBLIC_MAPBOX_TOKEN;
 
 const allWeather = await getCollection("weather");
 const allPalettes = await getCollection("palettes");

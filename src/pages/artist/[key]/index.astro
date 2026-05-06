@@ -75,6 +75,7 @@ function fmtSlug(slug: string) {
                 alt={`${p.slug} - ${artist.display}`}
                 loading="lazy"
                 decoding="async"
+                style={`view-transition-name: art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")};`}
               />
             </div>
             <div class="card-body">

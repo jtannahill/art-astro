@@ -155,7 +155,13 @@ const TIPS = {
   <span data-pagefind-filter={`year:${piece.date.slice(0, 4)}`} hidden>{piece.date.slice(0, 4)}</span>
 
   <figure class="hero">
-    <img src={previewUrl} alt={`${piece.slug} weather artwork`} loading="eager" decoding="async" />
+    <img
+      src={previewUrl}
+      alt={`${piece.slug} weather artwork`}
+      loading="eager"
+      decoding="async"
+      style={`view-transition-name: art-${piece.run_id.replace(/-/g, "")}-${piece.slug.replace(/-/g, "")};`}
+    />
   </figure>
 
   <div class="actions">

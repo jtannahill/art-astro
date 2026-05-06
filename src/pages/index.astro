@@ -108,6 +108,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
               alt={`${p.slug} weather art`}
               loading="lazy"
               decoding="async"
+              style={`view-transition-name: art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")};`}
             />
           </div>
           <div class="card-body">
