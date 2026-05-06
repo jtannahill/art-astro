@@ -34,14 +34,19 @@ jobs:
 
       - run: npm ci
 
-      - name: type-check
-        run: npx astro check
-        # `astro check` runs Astro's TypeScript validator across .astro
-        # files. Failing here keeps a broken build out of S3.
-        continue-on-error: false
+      - name: pull data
+        # Pull DynamoDB → src/data/generated/*.json BEFORE type-check
+        # so Content Collections (which reference those files) resolve.
+        run: npm run pull-data
 
-      - name: build (pulls DynamoDB → astro build)
-        run: npm run build
+      - name: type-check
+        # astro check validates .astro/.ts files. Failing here keeps a
+        # broken build out of S3.
+        run: npx astro check
+
+      - name: build
+        # Skip pull-data inside this step (already done above).
+        run: npm run build:no-pull
 
       - name: deploy
         run: |

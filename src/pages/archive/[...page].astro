@@ -9,7 +9,7 @@
  *
  * Single-piece pages still live on production at /weather/{run_id}/{slug}/.
  */
-import type { GetStaticPaths } from "astro";
+import type { GetStaticPaths, Page } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 
@@ -71,8 +71,8 @@ export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
   return paginate(runs, { pageSize: 8 });
 };
 
-const { page } = Astro.props;
-const runs = page.data as RunGroup[];
+const { page } = Astro.props as { page: Page<RunGroup> };
+const runs = page.data;
 
 const totalRuns = page.total;
 const totalPieces = runs.reduce((acc, r) => acc + r.pieces.length, 0);
