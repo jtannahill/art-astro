@@ -1,0 +1,64 @@
+---
+import Base from "../layouts/Base.astro";
+
+const buildTime = new Date().toISOString();
+---
+
+<Base
+  title="art.jt / next - Astro preview"
+  description="Astro 6 preview build of art.jamestannahill.com. Production site is unchanged."
+>
+  <h1>Astro preview is live.</h1>
+  <p class="muted">
+    This is the staging surface for the planned migration of
+    <a href="https://art.jamestannahill.com/">art.jamestannahill.com</a>
+    from Jinja2 + Lambda to Astro 6. Production is untouched; this URL just
+    proves the build &rarr; S3 &rarr; CloudFront pipeline works.
+  </p>
+
+  <section class="card">
+    <h2>Build info</h2>
+    <dl>
+      <dt>built</dt><dd class="mono">{buildTime}</dd>
+      <dt>base</dt><dd class="mono">{import.meta.env.BASE_URL}</dd>
+      <dt>mode</dt><dd class="mono">{import.meta.env.MODE}</dd>
+      <dt>prod</dt><dd class="mono">{String(import.meta.env.PROD)}</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Migration order</h2>
+    <ol>
+      <li>Deploy plumbing (this page) <span class="muted">&larr;</span></li>
+      <li>About page (mostly static, validates layout + SEO)</li>
+      <li>Data adapter: DynamoDB &rarr; Astro Content Collections</li>
+      <li>Archive (paginated, biggest UX win)</li>
+      <li>Artist galleries + methodology blocks</li>
+      <li>Single weather pages</li>
+      <li>Homepage</li>
+      <li>Comparison, studies, map, palettes</li>
+    </ol>
+  </section>
+</Base>
+
+<style>
+  h1 { font-size: 2.25rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--color-fg); }
+  .card {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 0.4rem 1rem;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  dt { color: var(--color-muted); margin: 0; }
+  dd { margin: 0; }
+  ol { padding-left: 1.25rem; color: #ccc; }
+  ol li { margin-bottom: 0.3rem; }
+</style>

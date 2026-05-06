@@ -1,0 +1,73 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonicalPath?: string;
+}
+
+const { title, description, canonicalPath } = Astro.props;
+const canonical = canonicalPath
+  ? new URL(canonicalPath, Astro.site).toString()
+  : new URL(Astro.url.pathname, Astro.site).toString();
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="robots" content="noindex, nofollow" />
+  </head>
+  <body>
+    <header class="hdr">
+      <a href={import.meta.env.BASE_URL}>
+        <span class="hdr-mark">art.jt</span><span class="hdr-slash"> / next</span>
+      </a>
+      <span class="hdr-tag">Astro Preview</span>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="ftr">
+      Astro {Astro.generator.split(" ").pop()} preview build · production lives at
+      <a href="https://art.jamestannahill.com/">art.jamestannahill.com</a>
+    </footer>
+
+    <style>
+      .hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+      .hdr a { color: var(--color-fg); font-family: var(--font-mono); font-size: 0.9rem; }
+      .hdr-slash { color: var(--color-muted); }
+      .hdr-tag {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--color-muted);
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+      }
+      .ftr {
+        max-width: 720px;
+        margin: 6rem auto 2rem;
+        padding: 1.5rem;
+        border-top: 1px solid var(--color-border);
+        font-size: 0.8rem;
+        color: var(--color-muted);
+      }
+    </style>
+  </body>
+</html>
