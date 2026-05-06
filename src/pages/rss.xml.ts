@@ -26,14 +26,26 @@ export async function GET(context: { site: URL | undefined }) {
         .split("-")
         .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
         .join(" ");
+      const previewUrl = `https://art.jamestannahill.com/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`;
+      const rationale =
+        w.data.rationale || `Generative weather art at ${title} on ${w.data.date}.`;
+      // Inline <img> at the top of the description renders the artwork
+      // in readers that strip <enclosure> (most web-based feed previews).
+      const richDescription = `<p><img src="${previewUrl}" alt="${title} - ${artistName}" style="max-width:100%;height:auto;border-radius:6px;" /></p><p>${rationale}</p>`;
       return {
         title: `${title} - ${artistName}`,
         link: `/weather/${w.data.run_id}/${w.data.slug}/`,
         pubDate: new Date(w.data.created_at || w.data.date || Date.now()),
-        description:
-          w.data.rationale ||
-          `Generative weather art at ${title} on ${w.data.date}.`,
+        description: richDescription,
         categories: [artistName, "generative", "weather"],
+        // <enclosure> is the canonical RSS spec for attached media —
+        // length is required by the spec but readers tolerate 0; the
+        // actual file size would need a HEAD per piece.
+        enclosure: {
+          url: previewUrl,
+          type: "image/png",
+          length: 0,
+        },
       };
     }),
   });
