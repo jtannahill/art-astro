@@ -1,0 +1,154 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Base from "../../../layouts/Base.astro";
+import Methodology from "../../../components/Methodology.astro";
+import { ARTISTS, ARTISTS_BY_KEY, LORA_METHODOLOGY } from "../../../data/artists.ts";
+
+export const getStaticPaths: GetStaticPaths = () =>
+  ARTISTS.map((a) => ({ params: { key: a.key } }));
+
+const { key } = Astro.params;
+if (!key || !(key in ARTISTS_BY_KEY)) {
+  return Astro.rewrite("/next/404/");
+}
+const artist = ARTISTS_BY_KEY[key];
+const methodology = LORA_METHODOLOGY[key];
+
+const all = await getCollection("weather");
+const pieces = all
+  .filter((w) => w.data.artist === key)
+  .map((w) => ({
+    run_id: w.data.run_id,
+    slug: w.data.slug,
+    rationale: w.data.rationale,
+    temp: w.data.temp,
+    wind_speed: w.data.wind_speed,
+    pressure: w.data.pressure,
+    quality_score: w.data.quality_score,
+  }))
+  .sort((a, b) => (b.run_id ?? "").localeCompare(a.run_id ?? ""));
+
+const PROD = "https://art.jamestannahill.com";
+
+function fmtSlug(slug: string) {
+  return slug.replace(/-/g, " ");
+}
+---
+
+<Base
+  title={`${artist.display} - art.jt / next`}
+  description={`Generative weather art through the lens of ${artist.display}. ${pieces.length} pieces in the archive.`}
+  canonicalPath={`/artist/${key}/`}
+>
+  <header class="artist-head">
+    <h1>{artist.display}</h1>
+    <p class="muted">
+      <a href={artist.link} target="_blank" rel="noopener">about this artist ↗</a>
+      {methodology && (
+        <span class="lora-tag">· custom FLUX.1-dev LoRA</span>
+      )}
+    </p>
+  </header>
+
+  {methodology && (
+    <section class="methodology">
+      <Methodology m={methodology} />
+    </section>
+  )}
+
+  <section class="gallery">
+    <header class="gallery-head">
+      <h2>Gallery</h2>
+      <span class="muted">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</span>
+    </header>
+
+    {pieces.length === 0 ? (
+      <p class="empty">No pieces in the archive yet for this artist.</p>
+    ) : (
+      <div class="grid">
+        {pieces.map((p) => (
+          <a class="card" href={`${PROD}/weather/${p.run_id}/${p.slug}/`} rel="noopener">
+            <img
+              src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
+              alt={`${p.slug} - ${artist.display}`}
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="card-body">
+              <h3>{fmtSlug(p.slug)}</h3>
+              <p class="env">
+                {p.temp != null && <span>{p.temp.toFixed(1)}°C</span>}
+                {p.wind_speed != null && <span>{p.wind_speed.toFixed(1)} m/s</span>}
+                {p.pressure != null && <span>{p.pressure.toFixed(0)} hPa</span>}
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+  </section>
+</Base>
+
+<style>
+  .artist-head { margin-bottom: 2rem; }
+  h1 { font-size: 2.25rem; margin: 0 0 0.25rem; letter-spacing: -0.02em; }
+  .lora-tag { color: var(--color-accent); }
+
+  .methodology {
+    margin: 0 0 3rem;
+  }
+
+  .gallery-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid #222;
+    padding-bottom: 0.4rem;
+    margin: 1rem 0;
+  }
+  h2 { font-size: 0.95rem; margin: 0; font-family: var(--font-mono); }
+  h3 {
+    font-size: 0.9rem;
+    margin: 0 0 0.25rem;
+    color: #fff;
+    text-transform: capitalize;
+  }
+  .empty { color: var(--color-muted); padding: 2rem 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    display: block;
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: #333;
+    text-decoration: none;
+  }
+  .card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #0a0a0a;
+  }
+  .card-body { padding: 0.6rem 0.75rem 0.75rem; }
+  .env {
+    color: var(--color-muted);
+    font-size: 0.72rem;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+  }
+</style>

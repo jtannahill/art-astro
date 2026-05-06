@@ -1,0 +1,226 @@
+---
+/**
+ * Bloomberg-style methodology block. Same content + visual treatment as the
+ * production /artist/{key}/ block, ported from the Python helper
+ * _bloomberg_methodology() in lambdas/site_rebuild/handler.py.
+ *
+ * Tooltips use native title="..." instead of the data-tip JS popup —
+ * accessible, no script, same information.
+ */
+import type { LoraMethodology } from "../data/artists.ts";
+
+interface Props {
+  m: LoraMethodology;
+}
+const { m } = Astro.props;
+
+const stepsFmt = m.steps.toLocaleString("en-US");
+
+const TIPS = {
+  base:
+    "Base diffusion model from Black Forest Labs. A 12B-parameter " +
+    "rectified-flow transformer trained on natural-language prompts. " +
+    "The LoRA rides on top, adapting it to a specific artist.",
+  set:
+    "Number of curated canvas reproductions used to fine-tune the LoRA. " +
+    "Each image was hand-picked for fidelity to the artist's signature style " +
+    "and captioned with title, medium, dimensions, and year.",
+  rank:
+    "Dimensionality of the low-rank adaptation matrices. Higher rank captures " +
+    "more style nuance but takes longer to train and risks overfitting on small " +
+    "datasets. 32 is a balanced choice for ~30-image sets.",
+  steps:
+    "Number of optimizer updates during fine-tuning. Each step processes a " +
+    "single image and nudges the LoRA weights toward the training distribution. " +
+    "Below ~800 the model under-fits; above ~2000 it starts to memorize.",
+  time:
+    "Wall-clock training time on the rented GPU. The trainer is " +
+    "ostris/flux-dev-lora-trainer running on Replicate.",
+  h100:
+    "NVIDIA H100 Tensor Core GPU - 80GB HBM3, datacenter accelerator " +
+    "rented on demand from Replicate.",
+};
+---
+
+<div class="bloomberg">
+  <div class="bb-rule">
+    <span class="bb-num">01</span>
+    <span class="bb-label">Model &amp; Methodology</span>
+    <span class="bb-line"></span>
+    <span class="bb-filed">Filed {m.filed_date}</span>
+  </div>
+
+  <h2 class="bb-headline">
+    Custom FLUX.1-dev LoRA, fine-tuned on {m.artist_display}'s own canvas work.
+  </h2>
+
+  <p class="bb-explain">
+    A <strong>LoRA</strong> (low-rank adaptation) is a compact set of trainable
+    weights that sits on top of a much larger frozen base model. Instead of
+    retraining <strong>FLUX.1-dev</strong>, the open-source 12-billion-parameter
+    text-to-image transformer from Black Forest Labs, the LoRA only adjusts
+    ~50 million new parameters using a small artist-specific dataset. The
+    result keeps FLUX's general image-generation ability intact while teaching
+    it one artist's visual language.
+  </p>
+
+  <p class="bb-summary">
+    Pieces in this gallery are produced by a private FLUX.1-dev LoRA trained
+    on {m.training_set_count} hand-curated reproductions from
+    <a href={m.source_url} target="_blank" rel="noopener" class="bb-link">{m.source_label}</a><Fragment set:html={m.series_html} />.
+    Every image was captioned with its title, medium, dimensions, and year,
+    binding the trigger to specific painterly cues rather than a generic
+    style label.
+  </p>
+
+  <div class="bb-grid">
+    <div class="bb-cell">
+      <div class="bb-key" title={TIPS.base}>Base Model</div>
+      <div class="bb-val">FLUX.1-dev</div>
+    </div>
+    <div class="bb-cell">
+      <div class="bb-key" title={TIPS.set}>Training Set</div>
+      <div class="bb-val">{m.training_set_count} canvases</div>
+    </div>
+    <div class="bb-cell">
+      <div class="bb-key" title={TIPS.rank}>LoRA Rank</div>
+      <div class="bb-val">{m.lora_rank}</div>
+    </div>
+    <div class="bb-cell">
+      <div class="bb-key" title={TIPS.steps}>Steps</div>
+      <div class="bb-val">{stepsFmt}</div>
+    </div>
+    <div class="bb-cell">
+      <div class="bb-key" title={TIPS.time}>Train Time</div>
+      <div class="bb-val">
+        {m.train_minutes} min · <span class="bb-h100" title={TIPS.h100}>H100</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="bb-foot">
+    Trigger word <code>{m.trigger_word}</code> is prepended to every
+    weather-derived prompt before inference. Trained via
+    <code>ostris/flux-dev-lora-trainer</code> on Replicate.
+  </p>
+</div>
+
+<style>
+  .bloomberg {
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  }
+  .bb-rule {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+  }
+  .bb-num {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  .bb-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .bb-line { flex: 1; height: 1px; background: #2a2a2a; margin-left: 0.5rem; }
+  .bb-filed {
+    font-size: 0.65rem;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .bb-headline {
+    font-size: 1.4rem;
+    color: #fff;
+    margin: 0 0 1rem;
+    letter-spacing: -0.5px;
+    line-height: 1.25;
+  }
+
+  .bb-explain {
+    font-size: 0.84rem;
+    line-height: 1.7;
+    color: #999;
+    margin: 0 0 1.25rem;
+    max-width: 62ch;
+    font-style: italic;
+    border-left: 2px solid #2a2a2a;
+    padding-left: 0.85rem;
+  }
+  .bb-explain strong { color: #ddd; }
+
+  .bb-summary {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: #bbb;
+    margin: 0 0 1.25rem;
+    max-width: 62ch;
+  }
+  .bb-link {
+    color: #e0e0e0;
+    text-decoration: none;
+    border-bottom: 1px solid #444;
+  }
+  .bb-summary :global(a) {
+    color: #e0e0e0;
+    text-decoration: none;
+    border-bottom: 1px solid #444;
+  }
+
+  .bb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0;
+    border-top: 1px solid #2a2a2a;
+    border-bottom: 1px solid #2a2a2a;
+    margin: 0 0 1.25rem;
+  }
+  .bb-cell {
+    padding: 0.85rem 1rem;
+    border-right: 1px solid #2a2a2a;
+  }
+  .bb-cell:last-child { border-right: none; }
+  .bb-key {
+    font-size: 0.62rem;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.25rem;
+    cursor: help;
+  }
+  .bb-val {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: #fff;
+    font-weight: 700;
+  }
+  .bb-h100 {
+    border-bottom: 1px dotted var(--color-muted);
+    cursor: help;
+  }
+
+  .bb-foot {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0;
+    font-style: italic;
+  }
+  .bb-foot code {
+    font-family: var(--font-mono);
+    background: #1a1a1a;
+    color: #ccc;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-style: normal;
+  }
+</style>

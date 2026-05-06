@@ -1,0 +1,123 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { ARTISTS, hasLora } from "../../data/artists.ts";
+
+const all = await getCollection("weather");
+
+// Group by artist, sort newest first, take 4 thumbnails per artist
+const byArtist = new Map<string, { run_id: string; slug: string }[]>();
+for (const w of all) {
+  const k = w.data.artist;
+  if (!k) continue;
+  if (!byArtist.has(k)) byArtist.set(k, []);
+  byArtist.get(k)!.push({ run_id: w.data.run_id, slug: w.data.slug });
+}
+for (const k of byArtist.keys()) {
+  const arr = byArtist.get(k)!;
+  arr.sort((a, b) => b.run_id.localeCompare(a.run_id));
+  byArtist.set(k, arr.slice(0, 4));
+}
+
+const PROD = "https://art.jamestannahill.com";
+const cards = ARTISTS.map((a) => ({
+  ...a,
+  has_lora: hasLora(a.key),
+  thumbs: (byArtist.get(a.key) ?? []).map((p) => ({
+    src: `${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`,
+    alt: `${p.slug} (${a.display})`,
+  })),
+}));
+---
+
+<Base
+  title="Artists - art.jt / next"
+  description="16 artistic lenses interpreting the same atmospheric data. 7 with custom FLUX.1-dev LoRA fine-tunes."
+>
+  <h1>Artists</h1>
+  <p class="muted">
+    16 artistic lenses interpret the same weather data into radically different
+    compositions. Asterisked artists have a custom FLUX.1-dev LoRA fine-tune
+    trained on their own canvas reproductions.
+  </p>
+
+  <div class="grid">
+    {cards.map((a) => (
+      <a class="card" href={`/next/artist/${a.key}/`}>
+        <div class="mosaic">
+          {a.thumbs.length > 0 ? (
+            a.thumbs.map((t) => (
+              <img src={t.src} alt={t.alt} loading="lazy" decoding="async" />
+            ))
+          ) : (
+            <div class="empty">no work yet</div>
+          )}
+        </div>
+        <div class="card-body">
+          <h2>
+            {a.display}
+            {a.has_lora && <span class="lora" title="Custom FLUX.1-dev LoRA fine-tune">★</span>}
+          </h2>
+          <p class="meta">{a.thumbs.length} recent</p>
+        </div>
+      </a>
+    ))}
+  </div>
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 {
+    font-size: 0.95rem;
+    margin: 0 0 0.25rem;
+    color: #fff;
+  }
+  .lora {
+    color: var(--color-accent);
+    margin-left: 0.3rem;
+    font-weight: 400;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .card {
+    display: block;
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #333; text-decoration: none; }
+  .mosaic {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    aspect-ratio: 1 / 1;
+    background: #0a0a0a;
+  }
+  .mosaic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Span across both columns/rows when fewer than 4 */
+  .mosaic img:only-child { grid-column: 1 / -1; grid-row: 1 / -1; }
+  .mosaic .empty {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    font-family: var(--font-mono);
+  }
+  .card-body { padding: 0.6rem 0.75rem 0.75rem; }
+  .meta { color: var(--color-muted); font-size: 0.75rem; margin: 0; }
+</style>
