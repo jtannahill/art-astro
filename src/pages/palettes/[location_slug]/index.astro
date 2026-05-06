@@ -51,7 +51,8 @@ function fmtCoords(lat?: number, lng?: number) {
     <span>{display}</span>
   </nav>
 
-  <h1 class="cap">{display}</h1>
+  <div data-pagefind-body>
+  <h1 class="cap" data-pagefind-meta="title">{display}</h1>
   <p class="lede muted">
     {fmtCoords(latest.lat, latest.lng)} · {samples.length}
     {samples.length === 1 ? "sample" : "samples"} · most recent {latest.date}
@@ -79,6 +80,7 @@ function fmtCoords(lat?: number, lng?: number) {
         </div>
       </article>
     ))}
+  </div>
   </div>
 </Base>
 

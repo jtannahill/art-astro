@@ -139,6 +139,7 @@ const TIPS = {
     <span>{title}</span>
   </nav>
 
+  <div data-pagefind-body>
   <h1 data-pagefind-meta="title">{title}</h1>
   <p class="lede muted">
     {coords(piece.lat, piece.lng)} ·
@@ -277,6 +278,7 @@ const TIPS = {
     <strong>License:</strong> CC BY-NC-ND 4.0. Attribution: James Tannahill / art.jamestannahill.com.
     No commercial use or derivatives without permission.
   </p>
+  </div>
 
   {/* Print drawer + Stripe checkout. Fetches available sizes from the
        print-shop Lambda and POSTs the selected size for a Stripe Checkout
@@ -330,9 +332,20 @@ const TIPS = {
       });
 
       function loadEditions() {
-        fetch(PRINT_SHOP_URL + "?action=editions&run_id=" + RUN_ID + "&slug=" + SLUG)
-          .then((r) => r.json())
+        sizeBox.innerHTML = '<p class="size-loading">Loading sizes...</p>';
+        // 12s timeout — print-shop Lambda's cold start can stretch
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
+        fetch(
+          PRINT_SHOP_URL + "?action=editions&run_id=" + RUN_ID + "&slug=" + SLUG,
+          { signal: controller.signal }
+        )
+          .then((r) => {
+            if (!r.ok) throw new Error("status " + r.status);
+            return r.json();
+          })
           .then((data) => {
+            clearTimeout(timer);
             editionsLoaded = true;
             sizeBox.innerHTML = "";
             const order = ["S", "M", "L", "XL", "XXL"];
@@ -358,8 +371,17 @@ const TIPS = {
               sizeBox.appendChild(div);
             });
           })
-          .catch(() => {
-            sizeBox.innerHTML = '<p class="size-error">Failed to load sizes - try again.</p>';
+          .catch((err) => {
+            clearTimeout(timer);
+            const msg =
+              err && err.name === "AbortError"
+                ? "Sizes are taking longer than usual."
+                : "Couldn't load sizes.";
+            sizeBox.innerHTML =
+              '<p class="size-error">' + msg + '</p>' +
+              '<button type="button" class="size-retry" data-size-retry>Retry</button>';
+            const retry = sizeBox.querySelector("[data-size-retry]");
+            if (retry) retry.addEventListener("click", () => loadEditions());
           });
       }
 
@@ -524,7 +546,19 @@ const TIPS = {
     gap: 0.75rem;
     margin-bottom: 1.5rem;
   }
-  :global(.size-error) { color: #ff6b6b; font-size: 0.9rem; padding: 0.5rem 0; }
+  :global(.size-error) { color: #ff8b8b; font-size: 0.9rem; padding: 0.5rem 0 0.25rem; margin: 0; }
+  :global(.size-loading) { color: var(--color-muted); font-size: 0.9rem; padding: 0.5rem 0; margin: 0; }
+  :global(.size-retry) {
+    background: #1a1a2e;
+    border: 1px solid #2a2a3e;
+    color: var(--color-accent);
+    border-radius: 6px;
+    padding: 0.3rem 0.8rem;
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  :global(.size-retry:hover) { border-color: var(--color-accent); }
   :global(.size-option) {
     display: flex !important;
     justify-content: space-between;
