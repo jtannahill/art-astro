@@ -7,8 +7,9 @@
     "dev": "astro dev",
     "start": "astro dev",
     "pull-data": "tsx scripts/pull-data.ts",
-    "build": "npm run pull-data && astro build",
-    "build:no-pull": "astro build",
+    "build": "npm run pull-data && astro build && npm run index-search",
+    "build:no-pull": "astro build && npm run index-search",
+    "index-search": "pagefind --site dist --output-subdir _pagefind",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -19,6 +20,7 @@
     "@aws-sdk/client-dynamodb": "^3.1043.0",
     "@aws-sdk/util-dynamodb": "^3.996.2",
     "astro": "^6.2.2",
+    "pagefind": "^1.5.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }

@@ -75,6 +75,14 @@ const runs = page.data as RunGroup[];
 const totalRuns = page.total;
 const totalPieces = runs.reduce((acc, r) => acc + r.pieces.length, 0);
 
+// Distinct artists across this page, for the filter chip row.
+const pageArtists = [...new Set(runs.flatMap((r) => r.pieces.map((p) => p.artist)))]
+  .sort()
+  .map((slug) => ({
+    slug,
+    name: slug.split("_").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" "),
+  }));
+
 function fmtArtist(slug: string) {
   return slug
     .split("_")
@@ -102,16 +110,41 @@ function fmtRunDate(run_id: string) {
     Every weather-driven generation, newest first. {totalRuns} runs · {totalPieces} pieces on this page · page {page.currentPage} of {page.lastPage}.
   </p>
 
+  {/* Filter island. Chips toggle per-artist visibility on this page;
+      the slider hides cards below a quality threshold. Hydration is
+      a single inline script — no framework. State is per-page only;
+      use /search/ for cross-page queries. */}
+  <div class="filter-bar" data-archive-filter>
+    <div class="chip-row">
+      <button type="button" class="chip active" data-artist="*">All artists</button>
+      {pageArtists.map((a) => (
+        <button type="button" class="chip" data-artist={a.slug}>{a.name}</button>
+      ))}
+    </div>
+    <label class="slider-row">
+      <span>min quality</span>
+      <input type="range" min="0" max="10" step="1" value="0" data-min-score />
+      <span class="slider-val" data-slider-val>0</span>
+      <span class="slider-shown" data-shown></span>
+    </label>
+  </div>
+
   {
     runs.map((run) => (
-      <section class="run">
+      <section class="run" data-run>
         <header class="run-head">
           <h2>{fmtRunDate(run.run_id)}</h2>
           <span class="run-count">{run.pieces.length} pieces</span>
         </header>
         <div class="grid">
           {run.pieces.map((p) => (
-            <a class="card" href={p.page_url} rel="noopener">
+            <a
+              class="card"
+              href={p.page_url}
+              rel="noopener"
+              data-artist={p.artist}
+              data-score={p.quality_score ?? 0}
+            >
               <div class="thumb">
                 <img
                   src={p.preview_url}
@@ -135,6 +168,49 @@ function fmtRunDate(run_id: string) {
       </section>
     ))
   }
+
+  <script is:inline>
+    (function () {
+      const root = document.querySelector("[data-archive-filter]");
+      if (!root) return;
+      const chips = root.querySelectorAll(".chip");
+      const slider = root.querySelector("[data-min-score]");
+      const sliderVal = root.querySelector("[data-slider-val]");
+      const shown = root.querySelector("[data-shown]");
+      const cards = document.querySelectorAll(".card[data-artist]");
+      const runs = document.querySelectorAll("[data-run]");
+      let activeArtist = "*";
+
+      function apply() {
+        const min = Number(slider.value || 0);
+        sliderVal.textContent = min;
+        let visible = 0;
+        cards.forEach((c) => {
+          const a = c.dataset.artist;
+          const s = Number(c.dataset.score || 0);
+          const ok = (activeArtist === "*" || a === activeArtist) && s >= min;
+          c.style.display = ok ? "" : "none";
+          if (ok) visible++;
+        });
+        shown.textContent = ` · ${visible} shown`;
+        // Hide an entire run if every card is filtered out
+        runs.forEach((r) => {
+          const anyVisible = !!r.querySelector('.card[data-artist]:not([style*="display: none"])');
+          r.style.display = anyVisible ? "" : "none";
+        });
+      }
+
+      chips.forEach((chip) => {
+        chip.addEventListener("click", () => {
+          activeArtist = chip.dataset.artist || "*";
+          chips.forEach((c) => c.classList.toggle("active", c === chip));
+          apply();
+        });
+      });
+      slider.addEventListener("input", apply);
+      apply();
+    })();
+  </script>
 
   <nav class="pager">
     {page.url.first && page.url.first !== page.url.current && (
@@ -220,6 +296,49 @@ function fmtRunDate(run_id: string) {
     flex-wrap: wrap;
     gap: 0.4rem 0.6rem;
   }
+
+  .filter-bar {
+    margin: 1.5rem 0 2rem;
+    padding: 1rem 1.25rem;
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.85rem;
+  }
+  .chip {
+    padding: 0.3rem 0.7rem;
+    background: #181818;
+    color: #ccc;
+    border: 1px solid #2a2a2a;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .chip:hover { border-color: #444; }
+  .chip.active {
+    background: #1a1a2e;
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+  .slider-row input[type="range"] {
+    flex: 0 0 160px;
+    accent-color: var(--color-accent);
+  }
+  .slider-val { color: #fff; font-family: var(--font-mono); min-width: 1.5em; }
+  .slider-shown { color: var(--color-muted); font-size: 0.75rem; }
 
   .pager {
     margin: 3rem 0 1rem;

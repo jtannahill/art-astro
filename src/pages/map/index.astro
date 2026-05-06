@@ -110,32 +110,112 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
         });
       });
 
-      function popupHtml(m, kind) {
+      function popupHtml(p) {
+        const isPalette = p.kind === "p";
         return (
           '<div style="font-family:-apple-system,sans-serif;color:#ccc;background:#0a0a0a;border-radius:6px;overflow:hidden;width:200px;">' +
-          '<img src="' + m.img + '" loading="lazy" style="width:100%;display:block;background:#000;aspect-ratio:1;object-fit:cover;">' +
+          '<img src="' + p.img + '" loading="lazy" style="width:100%;display:block;background:#000;aspect-ratio:1;object-fit:cover;">' +
           '<div style="padding:0.5rem 0.75rem;">' +
-          '<div style="font-size:0.85rem;color:#fff;text-transform:capitalize;margin-bottom:0.2rem;">' + m.title + '</div>' +
-          (kind === "w" ? '<div style="font-size:0.7rem;color:#c4b5fd;">' + m.artist.replace(/_/g, " ") + '</div>' : '<div style="font-size:0.7rem;color:#888;">satellite palette</div>') +
-          '<a href="' + m.url + '" style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#8ab4f8;">view →</a>' +
+          '<div style="font-size:0.85rem;color:#fff;text-transform:capitalize;margin-bottom:0.2rem;">' + p.title + '</div>' +
+          (isPalette
+            ? '<div style="font-size:0.7rem;color:#888;">satellite palette</div>'
+            : '<div style="font-size:0.7rem;color:#c4b5fd;">' + (p.artist || "").replace(/_/g, " ") + '</div>') +
+          '<a href="' + p.url + '" style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#8ab4f8;">view →</a>' +
           '</div></div>'
         );
       }
 
-      function addPin(m, color, kind) {
-        const el = document.createElement("div");
-        el.className = "pin pin-" + kind;
-        el.style.cssText =
-          "width:10px;height:10px;border-radius:50%;background:" + color +
-          ";box-shadow:0 0 6px " + color + ";cursor:pointer;border:1px solid #fff3;";
-        new mapboxgl.Marker(el)
-          .setLngLat([m.lng, m.lat])
-          .setPopup(new mapboxgl.Popup({ closeButton: false, maxWidth: "220px" }).setHTML(popupHtml(m, kind)))
-          .addTo(map);
+      function toFeatures(arr, kind) {
+        return arr.map((m) => ({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [m.lng, m.lat] },
+          properties: { kind, ...m },
+        }));
       }
 
-      weatherMarkers.forEach((m) => addPin(m, "#c4b5fd", "w"));
-      paletteMarkers.forEach((m) => addPin(m, "#4ade80", "p"));
+      map.on("load", () => {
+        const features = [
+          ...toFeatures(weatherMarkers, "w"),
+          ...toFeatures(paletteMarkers, "p"),
+        ];
+        map.addSource("pieces", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features },
+          cluster: true,
+          clusterMaxZoom: 6,
+          clusterRadius: 40,
+        });
+
+        map.addLayer({
+          id: "clusters",
+          type: "circle",
+          source: "pieces",
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-color": [
+              "step", ["get", "point_count"],
+              "#4a3a8e", 10,
+              "#6a4ace", 50,
+              "#9c83ff",
+            ],
+            "circle-radius": [
+              "step", ["get", "point_count"],
+              14, 10, 20, 50, 28,
+            ],
+            "circle-stroke-color": "rgba(255,255,255,0.15)",
+            "circle-stroke-width": 1,
+            "circle-opacity": 0.85,
+          },
+        });
+        map.addLayer({
+          id: "cluster-count",
+          type: "symbol",
+          source: "pieces",
+          filter: ["has", "point_count"],
+          layout: {
+            "text-field": ["get", "point_count_abbreviated"],
+            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+            "text-size": 12,
+          },
+          paint: { "text-color": "#fff" },
+        });
+        map.addLayer({
+          id: "pins",
+          type: "circle",
+          source: "pieces",
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-color": [
+              "match", ["get", "kind"],
+              "p", "#4ade80",
+              "#c4b5fd",
+            ],
+            "circle-radius": 6,
+            "circle-stroke-color": "rgba(255,255,255,0.25)",
+            "circle-stroke-width": 1,
+          },
+        });
+
+        map.on("click", "clusters", (e) => {
+          const f = map.queryRenderedFeatures(e.point, { layers: ["clusters"] })[0];
+          const clusterId = f.properties.cluster_id;
+          map.getSource("pieces").getClusterExpansionZoom(clusterId, (err, zoom) => {
+            if (err) return;
+            map.easeTo({ center: f.geometry.coordinates, zoom });
+          });
+        });
+        map.on("click", "pins", (e) => {
+          const f = e.features[0];
+          new mapboxgl.Popup({ closeButton: false, maxWidth: "220px" })
+            .setLngLat(f.geometry.coordinates)
+            .setHTML(popupHtml(f.properties))
+            .addTo(map);
+        });
+        for (const layer of ["clusters", "pins"]) {
+          map.on("mouseenter", layer, () => (map.getCanvas().style.cursor = "pointer"));
+          map.on("mouseleave", layer, () => (map.getCanvas().style.cursor = ""));
+        }
+      });
     }
     init();
   </script>

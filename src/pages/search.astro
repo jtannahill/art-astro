@@ -1,0 +1,64 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Search - art.jt"
+  description="Search every weather-driven piece by artist, location, rationale text, or date."
+>
+  <h1>Search</h1>
+  <p class="muted">
+    Local-first search across every piece's rationale, location, artist, and date.
+    Try queries like "rothko arctic", "frankenthaler humid", or "wind 30".
+  </p>
+
+  <div id="search"></div>
+
+  <link href="/_pagefind/pagefind-ui.css" rel="stylesheet" />
+  <script src="/_pagefind/pagefind-ui.js" is:inline></script>
+  <script is:inline>
+    window.addEventListener("DOMContentLoaded", () => {
+      // Wait for Pagefind UI script to load (CDN path is /_pagefind/...).
+      function init() {
+        if (typeof PagefindUI === "undefined") {
+          setTimeout(init, 80);
+          return;
+        }
+        new PagefindUI({
+          element: "#search",
+          showImages: false,
+          resetStyles: false,
+          showSubResults: true,
+          autofocus: true,
+          translations: { placeholder: "Search rationale, artist, location..." },
+        });
+      }
+      init();
+    });
+  </script>
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  p.muted { max-width: 60ch; margin: 0 0 2rem; }
+
+  #search { margin-top: 1.5rem; }
+
+  /* Pagefind UI overrides — match the dark monochrome look */
+  :global(.pagefind-ui) {
+    --pagefind-ui-primary: var(--color-accent);
+    --pagefind-ui-text: #ddd;
+    --pagefind-ui-background: #111;
+    --pagefind-ui-border: #2a2a2a;
+    --pagefind-ui-tag: #1a1a2e;
+    --pagefind-ui-border-radius: 8px;
+    --pagefind-ui-image-border-radius: 4px;
+    --pagefind-ui-image-box-ratio: 1 / 1;
+    --pagefind-ui-font: var(--font-sans);
+  }
+  :global(.pagefind-ui__search-input) {
+    background: #0d0d0d !important;
+    color: var(--color-fg) !important;
+  }
+  :global(.pagefind-ui__result-link) { color: var(--color-link) !important; }
+</style>

@@ -139,12 +139,20 @@ const TIPS = {
     <span>{title}</span>
   </nav>
 
-  <h1>{title}</h1>
+  <h1 data-pagefind-meta="title">{title}</h1>
   <p class="lede muted">
     {coords(piece.lat, piece.lng)} ·
     <a href={`/artist/${piece.artist}/`}>{artistName}</a> ·
     {piece.date}
   </p>
+
+  {/* Hidden Pagefind metadata + filters. The page body itself is indexed
+       via data-pagefind-body on <main>. These spans give the search index
+       structured fields it can return + facet on. */}
+  <span data-pagefind-meta={`artist:${artistName}`} hidden>{artistName}</span>
+  <span data-pagefind-meta={`date:${piece.date}`} hidden>{piece.date}</span>
+  <span data-pagefind-filter={`artist:${artistName}`} hidden>{artistName}</span>
+  <span data-pagefind-filter={`year:${piece.date.slice(0, 4)}`} hidden>{piece.date.slice(0, 4)}</span>
 
   <figure class="hero">
     <img src={previewUrl} alt={`${piece.slug} weather artwork`} loading="eager" decoding="async" />

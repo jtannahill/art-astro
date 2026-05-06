@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 
 interface Props {
   title: string;
@@ -22,6 +23,7 @@ const canonical = canonicalPath
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
+    <ClientRouter />
     <slot name="head" />
   </head>
   <body>
@@ -34,6 +36,7 @@ const canonical = canonicalPath
         <a href="/artist/">Artists</a>
         <a href="/palettes/">Palettes</a>
         <a href="/map/">Map</a>
+        <a href="/search/">Search</a>
         <a href="/about/">About</a>
       </nav>
     </header>
