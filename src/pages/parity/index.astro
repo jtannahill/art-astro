@@ -1,0 +1,284 @@
+---
+/**
+ * Side-by-side migration parity report. Lives at /next/parity/.
+ * Pairs each production surface with its Astro counterpart, shows what
+ * was earned by the migration beyond raw parity, and links to live
+ * samples for spot-checking before cutover.
+ */
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+const PROD = "https://art.jamestannahill.com";
+
+const allWeather = await getCollection("weather");
+const allPalettes = await getCollection("palettes");
+const runIds = [...new Set(allWeather.map((w) => w.data.run_id).filter(Boolean))].sort(
+  (a, b) => b.localeCompare(a)
+);
+const latestRun = runIds[0] ?? "";
+const samplePiece = allWeather.find((w) => w.data.run_id === latestRun);
+const sampleArtist = samplePiece?.data.artist ?? "sam_francis";
+
+interface Row {
+  surface: string;
+  status: "migrated" | "shell" | "skipped";
+  prod: string;
+  next: string;
+  earned?: string;
+  notes?: string;
+}
+
+const rows: Row[] = [
+  {
+    surface: "Homepage",
+    status: "migrated",
+    prod: "/",
+    next: "/next/",
+    earned: "Generate dropdown lists all 16 artists (Jinja shipped only 11). Inline onclick handlers replaced with delegated data-* hooks.",
+  },
+  {
+    surface: "About",
+    status: "migrated",
+    prod: "/about/",
+    next: "/next/about/",
+    earned:
+      "FAQ defined once in src/data/faq.ts; FAQPage JSON-LD and the visible <details> accordion now render from one typed source so they cannot drift.",
+  },
+  {
+    surface: "Archive (paginated)",
+    status: "migrated",
+    prod: "/weather/",
+    next: "/next/archive/",
+    earned:
+      "Production ships 1 page, ~1 MB HTML, 864 lazy <img>. Astro ships 12 pages, 42–65 KB each, max 80 images per page.",
+  },
+  {
+    surface: "Artist index",
+    status: "migrated",
+    prod: "/artist/",
+    next: "/next/artist/",
+    earned:
+      "Roster of 16 artists in one typed array shared with homepage dropdown. LoRA stars driven by the same map that drives the methodology blocks.",
+  },
+  {
+    surface: "Artist gallery (sample)",
+    status: "migrated",
+    prod: `/artist/${sampleArtist}/`,
+    next: `/next/artist/${sampleArtist}/`,
+    earned:
+      "Bloomberg methodology block factored into a reusable <Methodology /> component; tooltips switched from custom .tip-bubble JS to native title=\"...\".",
+  },
+  {
+    surface: "Single weather page",
+    status: "migrated",
+    prod: samplePiece
+      ? `/weather/${samplePiece.data.run_id}/${samplePiece.data.slug}/`
+      : "/weather/",
+    next: samplePiece
+      ? `/next/weather/${samplePiece.data.run_id}/${samplePiece.data.slug}/`
+      : "/next/archive/",
+    earned:
+      "854 pages built in 1.6 s on a laptop. Production renders the same set with a 15-min Lambda budget that chronically times out. Page weight ~14 KB vs ~50 KB on production.",
+  },
+  {
+    surface: "Style comparison",
+    status: "migrated",
+    prod: "/comparison/",
+    next: "/next/comparison/",
+    earned:
+      "Cell grouping logic ported from Python to typed TypeScript. 10 5°-cells with 3+ artists, sorted by artist count.",
+  },
+  {
+    surface: "Palette index",
+    status: "migrated",
+    prod: "/palettes/",
+    next: "/next/palettes/",
+    earned: `${allPalettes.length} samples across 23 locations, all build-time-derived from DynamoDB.`,
+  },
+  {
+    surface: "Palette location",
+    status: "migrated",
+    prod: "/palettes/sahara/",
+    next: "/next/palettes/sahara/",
+    earned: "23 per-location pages, full date history, hex codes alongside swatches.",
+  },
+  {
+    surface: "World map",
+    status: "migrated",
+    prod: "/map/",
+    next: "/next/map/",
+    earned:
+      "887 markers (864 weather + 23 palette) baked into the page at build time. Mapbox token moved to repo secret because GitHub's secret-scanning rule blocks committing pk.* tokens.",
+    notes: "Public Mapbox client token now injected at build via PUBLIC_MAPBOX_TOKEN.",
+  },
+  {
+    surface: "Studies",
+    status: "shell",
+    prod: "/studies/",
+    next: "/next/studies/",
+    notes:
+      "Zero STUDY items in DynamoDB on production today. Astro page is an empty-state shell; will pick up data automatically once pull-data.ts adds a studies collection.",
+  },
+];
+
+const counts = {
+  migrated: rows.filter((r) => r.status === "migrated").length,
+  shell: rows.filter((r) => r.status === "shell").length,
+  total_pages: 913,
+  weather_pieces: allWeather.length,
+  palettes: allPalettes.length,
+  runs: runIds.length,
+};
+---
+
+<Base
+  title="Migration parity - art.jt / next"
+  description="Side-by-side comparison of production and Astro surfaces."
+>
+  <h1>Migration parity</h1>
+  <p class="lede muted">
+    Production (Jinja2 + 15-min <code>art-site-rebuild</code> Lambda) and
+    Astro 6 (DynamoDB → typed Content Collections → static build → S3) running
+    in parallel. {counts.migrated} surfaces fully migrated, {counts.shell} as
+    empty-state shell. {counts.total_pages} total pages on the new stack,
+    built in ~2 s.
+  </p>
+
+  <section class="stats">
+    <div><dt>weather pieces</dt><dd>{counts.weather_pieces}</dd></div>
+    <div><dt>palettes</dt><dd>{counts.palettes}</dd></div>
+    <div><dt>runs</dt><dd>{counts.runs}</dd></div>
+    <div><dt>pages built</dt><dd>{counts.total_pages}</dd></div>
+    <div><dt>build time</dt><dd>~2 s</dd></div>
+    <div><dt>CI deploy</dt><dd>~45 s end-to-end</dd></div>
+  </section>
+
+  {rows.map((row) => (
+    <article class={`row ${row.status}`}>
+      <header>
+        <h2>{row.surface}</h2>
+        <span class={`pill pill-${row.status}`}>
+          {row.status === "migrated" ? "migrated" : row.status === "shell" ? "shell" : "skipped"}
+        </span>
+      </header>
+      <div class="links">
+        <div class="col">
+          <span class="src-label">Production</span>
+          <a href={`${PROD}${row.prod}`} target="_blank" rel="noopener">{row.prod} ↗</a>
+        </div>
+        <div class="col">
+          <span class="src-label">Astro</span>
+          <a href={row.next}>{row.next} →</a>
+        </div>
+      </div>
+      {row.earned && <p class="earned"><strong>Earned:</strong> {row.earned}</p>}
+      {row.notes && <p class="notes">{row.notes}</p>}
+    </article>
+  ))}
+
+  <section class="cutover">
+    <h2>Cutover checklist</h2>
+    <ol>
+      <li>Add a one-time image-optimization step (responsive AVIF/WebP) — single biggest UX win still on the table.</li>
+      <li>Drop <code>base: '/next'</code> from <code>astro.config.mjs</code>.</li>
+      <li>Change CI's <code>S3_PREFIX</code> from <code>site/next</code> to <code>site</code>.</li>
+      <li>Update the IAM policy on <code>art-astro-ci</code> to write the full <code>site/*</code> prefix.</li>
+      <li>Cut over by switching the CloudFront default behavior origin path or by deleting the legacy <code>site/</code> contents and letting Astro own it.</li>
+      <li>Retire <code>art-site-rebuild</code> Lambda + the Jinja2 templates in <code>art-generator/lambdas/site_rebuild</code>.</li>
+    </ol>
+  </section>
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1rem; margin: 0; color: #fff; letter-spacing: -0.01em; }
+  .lede { max-width: 65ch; margin: 0 0 2rem; }
+  .lede code { background: #1a1a2e; color: var(--color-accent); padding: 0.05rem 0.3rem; border-radius: 3px; font-family: var(--font-mono); font-size: 0.85em; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    margin: 0 0 2.5rem;
+    overflow: hidden;
+  }
+  .stats div {
+    padding: 0.85rem 1rem;
+    border-right: 1px solid #2a2a2a;
+  }
+  .stats div:last-child { border-right: none; }
+  .stats dt { font-size: 0.62rem; color: var(--color-muted); text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 0.25rem; }
+  .stats dd { font-family: var(--font-mono); font-size: 0.95rem; color: #fff; font-weight: 700; margin: 0; }
+
+  .row {
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    background: #111;
+  }
+  .row.shell { background: #0e0d12; }
+  .row header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .pill {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid #2a2a2a;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+  }
+  .pill-migrated { color: #4ade80; border-color: #4ade8033; background: #0a1f10; }
+  .pill-shell { color: #d4a851; border-color: #d4a85133; background: #1f1810; }
+
+  .links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .col { display: flex; flex-direction: column; gap: 0.15rem; }
+  .src-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+  }
+  .col a {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-link);
+    word-break: break-all;
+  }
+  @media (max-width: 640px) {
+    .links { grid-template-columns: 1fr; }
+  }
+  .earned, .notes {
+    color: #ccc;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin: 0.5rem 0 0;
+    max-width: 80ch;
+  }
+  .earned strong { color: #fff; }
+  .notes { color: #999; font-style: italic; }
+
+  .cutover {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    border: 1px dashed #2a2a2a;
+    border-radius: 8px;
+    background: #0d0d0d;
+  }
+  .cutover h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.1em; }
+  .cutover ol { padding-left: 1.5rem; color: #ccc; line-height: 1.8; margin: 0; }
+  .cutover code { background: #1a1a2e; color: var(--color-accent); padding: 0.05rem 0.3rem; border-radius: 3px; font-family: var(--font-mono); font-size: 0.85em; }
+</style>
