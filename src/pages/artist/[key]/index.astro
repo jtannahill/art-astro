@@ -68,13 +68,15 @@ function fmtSlug(slug: string) {
     ) : (
       <div class="grid">
         {pieces.map((p) => (
-          <a class="card" href={`${PROD}/weather/${p.run_id}/${p.slug}/`} rel="noopener">
-            <img
-              src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
-              alt={`${p.slug} - ${artist.display}`}
-              loading="lazy"
-              decoding="async"
-            />
+          <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
+            <div class="thumb">
+              <img
+                src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
+                alt={`${p.slug} - ${artist.display}`}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
             <div class="card-body">
               <h3>{fmtSlug(p.slug)}</h3>
               <p class="env">
@@ -135,12 +137,17 @@ function fmtSlug(slug: string) {
     border-color: #333;
     text-decoration: none;
   }
-  .card img {
+  .thumb {
     width: 100%;
     aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #0a0a0a;
+  }
+  .card img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     display: block;
-    background: #0a0a0a;
   }
   .card-body { padding: 0.6rem 0.75rem 0.75rem; }
   .env {

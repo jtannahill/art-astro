@@ -112,14 +112,14 @@ function fmtRunDate(run_id: string) {
         <div class="grid">
           {run.pieces.map((p) => (
             <a class="card" href={p.page_url} rel="noopener">
-              <img
-                src={p.preview_url}
-                alt={`${p.slug} (${fmtArtist(p.artist)})`}
-                loading="lazy"
-                decoding="async"
-                width="640"
-                height="640"
-              />
+              <div class="thumb">
+                <img
+                  src={p.preview_url}
+                  alt={`${p.slug} (${fmtArtist(p.artist)})`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
               <div class="card-body">
                 <h3>{p.slug.replace(/-/g, " ")}</h3>
                 <p class="meta">{fmtArtist(p.artist)}</p>
@@ -194,12 +194,17 @@ function fmtRunDate(run_id: string) {
     border-color: #333;
     text-decoration: none;
   }
-  .card img {
+  .thumb {
     width: 100%;
     aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #0a0a0a;
+  }
+  .card img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     display: block;
-    background: #0a0a0a;
   }
   .card-body { padding: 0.6rem 0.75rem 0.75rem; }
   .meta {

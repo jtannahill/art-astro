@@ -102,12 +102,14 @@ const dropdownArtists = ARTISTS.map((a) => ({
     <div class="grid">
       {todaysPieces.map((p) => (
         <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
-          <img
-            src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
-            alt={`${p.slug} weather art`}
-            loading="lazy"
-            decoding="async"
-          />
+          <div class="thumb">
+            <img
+              src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
+              alt={`${p.slug} weather art`}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
           <div class="card-body">
             <h3>{fmtSlug(p.slug)}</h3>
             <p class="meta">{coords(p.lat, p.lng)}</p>
@@ -133,8 +135,10 @@ const dropdownArtists = ARTISTS.map((a) => ({
   ) : (
     <div class="grid">
       {latestPalettes.map((p) => (
-        <a class="card palette-card" href={`${PROD}/palettes/${p.location_slug}/`} rel="noopener">
-          <img src={paletteThumb(p.location_slug, p.date)} alt={`${p.location_slug} satellite`} loading="lazy" decoding="async" />
+        <a class="card palette-card" href={`/palettes/${p.location_slug}/`}>
+          <div class="thumb">
+            <img src={paletteThumb(p.location_slug, p.date)} alt={`${p.location_slug} satellite`} loading="lazy" decoding="async" />
+          </div>
           <div class="card-body">
             <h3>{fmtSlug(p.location_slug)}</h3>
             <div class="swatches">
@@ -293,12 +297,17 @@ const dropdownArtists = ARTISTS.map((a) => ({
     border-color: #333;
     text-decoration: none;
   }
-  .card img {
+  .thumb {
     width: 100%;
     aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #0a0a0a;
+  }
+  .card img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     display: block;
-    background: #0a0a0a;
   }
   .card-body { padding: 0.6rem 0.75rem 0.75rem; }
   .meta { color: var(--color-accent); font-size: 0.75rem; margin: 0 0 0.3rem; }

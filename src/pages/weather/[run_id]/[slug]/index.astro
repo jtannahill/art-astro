@@ -155,14 +155,20 @@ const TIPS = {
       <span>Buy print</span>
       <span class="sub">Limited Edition · Ships Worldwide</span>
     </button>
+    {/* Watermark Lambda 302-redirects to S3 cross-origin, which makes
+         browsers ignore the `download` attribute. target="_blank" keeps
+         the visitor on this page while the download happens in a new tab. */}
     {piece.has_8k && (
-      <a class="btn" href={`${WATERMARK_URL}?r=${piece.run_id}&s=${piece.slug}&z=8k`}
+      <a class="btn" target="_blank" rel="noopener"
+        href={`${WATERMARK_URL}?r=${piece.run_id}&s=${piece.slug}&z=8k`}
         download={`${piece.slug}-${piece.artist}-${piece.run_id}-8k.png`}>Download PNG (8K)</a>
     )}
-    <a class="btn" href={`${WATERMARK_URL}?r=${piece.run_id}&s=${piece.slug}&z=4k`}
+    <a class="btn" target="_blank" rel="noopener"
+      href={`${WATERMARK_URL}?r=${piece.run_id}&s=${piece.slug}&z=4k`}
       download={`${piece.slug}-${piece.artist}-${piece.run_id}-4k.png`}>Download PNG (4K)</a>
     {piece.has_svg && (
-      <a class="btn ghost" href={svgUrl}
+      <a class="btn ghost" target="_blank" rel="noopener"
+        href={svgUrl}
         download={`${piece.slug}-${piece.artist}-${piece.run_id}-vector.svg`}>Download SVG</a>
     )}
   </div>
@@ -448,7 +454,11 @@ const TIPS = {
   .btn.primary .sub { font-size: 0.65rem; opacity: 0.7; font-weight: 400; }
   .btn.ghost { opacity: 0.6; }
 
-  /* Print drawer */
+  /* Print drawer.
+     The size-option / size-label / size-edition / size-price / selected /
+     sold-out / sold-out-badge selectors below use :global() because the
+     rows are inserted by JS after render and don't carry Astro's scoped
+     data-astro-cid attribute. Without :global the styles never match. */
   .drawer-overlay {
     position: fixed;
     inset: 0;
@@ -500,9 +510,9 @@ const TIPS = {
     gap: 0.75rem;
     margin-bottom: 1.5rem;
   }
-  .size-error { color: #ff6b6b; font-size: 0.9rem; }
-  .size-option {
-    display: flex;
+  :global(.size-error) { color: #ff6b6b; font-size: 0.9rem; padding: 0.5rem 0; }
+  :global(.size-option) {
+    display: flex !important;
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
@@ -510,15 +520,18 @@ const TIPS = {
     border: 1px solid #2a2a2a;
     border-radius: 6px;
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
   }
-  .size-option:hover { border-color: #444; }
-  .size-option.selected { border-color: var(--color-accent); background: #1a1a2e; }
-  .size-option.sold-out { opacity: 0.4; pointer-events: none; }
-  .size-label { color: #fff; font-size: 0.95rem; }
-  .size-edition { color: #666; font-size: 0.75rem; }
-  .size-price { color: var(--color-accent); font-size: 1rem; font-weight: 600; }
-  .sold-out-badge {
+  :global(.size-option:hover) { border-color: #444; }
+  :global(.size-option.selected) {
+    border-color: #c4b5fd;
+    background: #1a1a2e;
+  }
+  :global(.size-option.sold-out) { opacity: 0.4; pointer-events: none; }
+  :global(.size-label) { color: #fff; font-size: 0.95rem; }
+  :global(.size-edition) { color: #666; font-size: 0.75rem; margin-top: 0.15rem; }
+  :global(.size-price) { color: #c4b5fd; font-size: 1rem; font-weight: 600; }
+  :global(.sold-out-badge) {
     background: #331111;
     color: #ff6b6b;
     font-size: 0.7rem;

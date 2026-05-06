@@ -50,12 +50,14 @@ function fmtSlug(s: string) {
     <div class="grid">
       {palettes.map((p) => (
         <a class="card" href={`/palettes/${p.location_slug}/`}>
-          <img
-            src={`${PROD}/palettes/${p.date}/${p.location_slug}/source-thumb.jpg`}
-            alt={`${p.location_slug} satellite imagery`}
-            loading="lazy"
-            decoding="async"
-          />
+          <div class="thumb">
+            <img
+              src={`${PROD}/palettes/${p.date}/${p.location_slug}/source-thumb.jpg`}
+              alt={`${p.location_slug} satellite imagery`}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
           <div class="card-body">
             <h3>{fmtSlug(p.location_slug)}</h3>
             <div class="swatches" title="Median-cut quantization from Sentinel-2 at 10 m ground resolution">
@@ -91,12 +93,17 @@ function fmtSlug(s: string) {
     transition: transform 0.15s, border-color 0.15s;
   }
   .card:hover { transform: translateY(-2px); border-color: #333; text-decoration: none; }
-  .card img {
+  .thumb {
     width: 100%;
     aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #0a0a0a;
+  }
+  .card img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     display: block;
-    background: #0a0a0a;
   }
   .card-body { padding: 0.7rem 0.85rem 0.85rem; }
   .swatches {
