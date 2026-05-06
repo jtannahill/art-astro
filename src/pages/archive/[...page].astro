@@ -1,0 +1,239 @@
+---
+/**
+ * Paginated weather archive.
+ *
+ * Production /weather/ ships ~1MB of HTML and 864 lazy <img> tags on a
+ * single page. This route groups pieces by run (one run = ~10 pieces
+ * generated together) and paginates by run, so each rendered page
+ * carries at most ~80 images.
+ *
+ * Single-piece pages still live on production at /weather/{run_id}/{slug}/.
+ */
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+interface RunGroup {
+  run_id: string;
+  date: string;
+  pieces: PieceMeta[];
+}
+
+interface PieceMeta {
+  slug: string;
+  artist: string;
+  rationale: string;
+  preview_url: string;
+  page_url: string;
+  temp?: number;
+  wind_speed?: number;
+  pressure?: number;
+  score?: number;
+  quality_score?: number;
+}
+
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+  // Pre-render in production CDN URLs so the staging archive does not
+  // need its own image pipeline yet. Cutover swaps these to optimized
+  // /next/-served variants once we add an image script.
+  const PROD = "https://art.jamestannahill.com";
+  const all = await getCollection("weather");
+  const groups = new Map<string, typeof all>();
+  for (const w of all) {
+    const rid = w.data.run_id || w.data.date;
+    if (!rid) continue;
+    if (!groups.has(rid)) groups.set(rid, []);
+    groups.get(rid)!.push(w);
+  }
+  const runs: RunGroup[] = [...groups.entries()]
+    .map(([run_id, items]) => ({
+      run_id,
+      date: items[0].data.date || run_id.slice(0, 10),
+      pieces: items
+        .map((w) => ({
+          slug: w.data.slug,
+          artist: w.data.artist,
+          rationale: w.data.rationale,
+          preview_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
+          page_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/`,
+          temp: w.data.temp,
+          wind_speed: w.data.wind_speed,
+          pressure: w.data.pressure,
+          score: w.data.score,
+          quality_score: w.data.quality_score,
+        }))
+        .sort((a, b) => (b.quality_score ?? 0) - (a.quality_score ?? 0)),
+    }))
+    .sort((a, b) => b.run_id.localeCompare(a.run_id));
+
+  return paginate(runs, { pageSize: 8 });
+};
+
+const { page } = Astro.props;
+const runs = page.data as RunGroup[];
+
+const totalRuns = page.total;
+const totalPieces = runs.reduce((acc, r) => acc + r.pieces.length, 0);
+
+function fmtArtist(slug: string) {
+  return slug
+    .split("_")
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(" ");
+}
+
+function fmtRunDate(run_id: string) {
+  // run_id is "YYYY-MM-DD-HHMMSS" or just "YYYY-MM-DD"
+  const datePart = run_id.slice(0, 10);
+  const tsPart = run_id.length > 10 ? run_id.slice(11) : "";
+  if (!tsPart) return datePart;
+  const hh = tsPart.slice(0, 2);
+  const mm = tsPart.slice(2, 4);
+  return `${datePart} ${hh}:${mm} UTC`;
+}
+---
+
+<Base
+  title={`Archive page ${page.currentPage} - art.jt / next`}
+  description={`Browse ${totalRuns} weather-driven generations across the full archive. Page ${page.currentPage} of ${page.lastPage}.`}
+>
+  <h1>Archive</h1>
+  <p class="muted">
+    Every weather-driven generation, newest first. {totalRuns} runs · {totalPieces} pieces on this page · page {page.currentPage} of {page.lastPage}.
+  </p>
+
+  {
+    runs.map((run) => (
+      <section class="run">
+        <header class="run-head">
+          <h2>{fmtRunDate(run.run_id)}</h2>
+          <span class="run-count">{run.pieces.length} pieces</span>
+        </header>
+        <div class="grid">
+          {run.pieces.map((p) => (
+            <a class="card" href={p.page_url} rel="noopener">
+              <img
+                src={p.preview_url}
+                alt={`${p.slug} (${fmtArtist(p.artist)})`}
+                loading="lazy"
+                decoding="async"
+                width="640"
+                height="640"
+              />
+              <div class="card-body">
+                <h3>{p.slug.replace(/-/g, " ")}</h3>
+                <p class="meta">{fmtArtist(p.artist)}</p>
+                <p class="env">
+                  {p.temp != null && <span>{p.temp.toFixed(1)}&deg;C</span>}
+                  {p.wind_speed != null && <span>{p.wind_speed.toFixed(1)} m/s</span>}
+                  {p.pressure != null && <span>{p.pressure.toFixed(0)} hPa</span>}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))
+  }
+
+  <nav class="pager">
+    {page.url.first && page.url.first !== page.url.current && (
+      <a href={page.url.first}>« first</a>
+    )}
+    {page.url.prev && <a href={page.url.prev}>‹ prev</a>}
+    <span class="muted">page {page.currentPage} / {page.lastPage}</span>
+    {page.url.next && <a href={page.url.next}>next ›</a>}
+    {page.url.last && page.url.last !== page.url.current && (
+      <a href={page.url.last}>last »</a>
+    )}
+  </nav>
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 {
+    font-size: 0.95rem;
+    font-family: var(--font-mono);
+    color: var(--color-fg);
+    margin: 0;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  h3 {
+    font-size: 0.95rem;
+    margin: 0 0 0.25rem;
+    color: #fff;
+    text-transform: capitalize;
+  }
+  .run { margin: 2.5rem 0; }
+  .run-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid #222;
+    padding-bottom: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  .run-count { color: var(--color-muted); font-size: 0.8rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    display: block;
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: #333;
+    text-decoration: none;
+  }
+  .card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #0a0a0a;
+  }
+  .card-body { padding: 0.6rem 0.75rem 0.75rem; }
+  .meta {
+    color: var(--color-accent);
+    font-size: 0.78rem;
+    margin: 0 0 0.4rem;
+  }
+  .env {
+    color: var(--color-muted);
+    font-size: 0.72rem;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .pager {
+    margin: 3rem 0 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .pager a {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: var(--color-link);
+    text-decoration: none;
+  }
+  .pager a:hover { border-color: #444; background: #1a1a2e; }
+</style>
