@@ -6,12 +6,12 @@
  */
 import { ARTISTS, LORA_METHODOLOGY } from "./artists.ts";
 
-// Derived from data — change automatically when the roster changes.
+// Derived from data - change automatically when the roster changes.
 export const TOTAL_ARTISTS = ARTISTS.length;
 export const LORA_ARTIST_COUNT = Object.keys(LORA_METHODOLOGY).length;
 
 // Pipeline configuration. Keep in sync with art-weather-ingest /
-// art-satellite-ingest Lambdas — these are doctrine numbers, not data.
+// art-satellite-ingest Lambdas - these are doctrine numbers, not data.
 export const SCAN_POINTS = 54;
 export const LATITUDE_BANDS = 10;
 export const TOP_LOCATIONS_PER_DAY = 10;

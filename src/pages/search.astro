@@ -18,7 +18,7 @@ import Base from "../layouts/Base.astro";
   <script src="/_pagefind/pagefind-ui.js" is:inline></script>
   <script is:inline>
     // Mount Pagefind UI on initial page load AND on every Astro
-    // view-transition swap — astro:page-load fires for both, including
+    // view-transition swap - astro:page-load fires for both, including
     // when ClientRouter navigates here from another page.
     function mountSearch() {
       const el = document.getElementById("search");
@@ -53,7 +53,7 @@ import Base from "../layouts/Base.astro";
 
   #search { margin-top: 1.5rem; }
 
-  /* Pagefind UI overrides — match the dark monochrome look */
+  /* Pagefind UI overrides - match the dark monochrome look */
   :global(.pagefind-ui) {
     --pagefind-ui-primary: var(--color-accent);
     --pagefind-ui-text: #ddd;

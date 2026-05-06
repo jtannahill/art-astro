@@ -13,12 +13,12 @@ export async function GET(context: { site: URL | undefined }) {
     .slice(0, 50);
 
   return rss({
-    title: "art.jt — generative weather art",
+    title: "art.jt - generative weather art",
     description: `Daily generative artwork from real atmospheric data, interpreted through ${TOTAL_ARTISTS} artist lenses (${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes).`,
     site,
     customData:
       "<language>en-us</language>" +
-      "<copyright>CC BY-NC-ND 4.0 — James Tannahill</copyright>",
+      "<copyright>CC BY-NC-ND 4.0 - James Tannahill</copyright>",
     items: items.map((w) => {
       const artistName =
         ARTISTS_BY_KEY[w.data.artist]?.display ?? w.data.artist.replace(/_/g, " ");
@@ -27,7 +27,7 @@ export async function GET(context: { site: URL | undefined }) {
         .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
         .join(" ");
       return {
-        title: `${title} — ${artistName}`,
+        title: `${title} - ${artistName}`,
         link: `/weather/${w.data.run_id}/${w.data.slug}/`,
         pubDate: new Date(w.data.created_at || w.data.date || Date.now()),
         description:

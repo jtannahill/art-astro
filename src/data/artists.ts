@@ -36,7 +36,7 @@ export interface LoraMethodology {
   artist_display: string;
   source_url: string;
   source_label: string;
-  /** Trailing fragment appended after the source label — may contain HTML */
+  /** Trailing fragment appended after the source label - may contain HTML */
   series_html: string;
   training_set_count: number;
   lora_rank: number;

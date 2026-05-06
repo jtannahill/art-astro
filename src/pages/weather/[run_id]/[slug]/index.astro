@@ -363,7 +363,7 @@ const TIPS = {
             });
           })
           .catch(() => {
-            sizeBox.innerHTML = '<p class="size-error">Failed to load sizes — try again.</p>';
+            sizeBox.innerHTML = '<p class="size-error">Failed to load sizes - try again.</p>';
           });
       }
 
@@ -373,7 +373,7 @@ const TIPS = {
           el.classList.toggle("selected", el.dataset.size === key)
         );
         checkoutBtn.disabled = false;
-        checkoutBtn.textContent = "Checkout — $" + (priceCents / 100).toFixed(0);
+        checkoutBtn.textContent = "Checkout - $" + (priceCents / 100).toFixed(0);
       }
 
       checkoutBtn.addEventListener("click", () => {
@@ -390,7 +390,7 @@ const TIPS = {
             if (data.url) {
               window.location.href = data.url;
             } else {
-              checkoutBtn.textContent = data.error === "sold_out" ? "Sold Out" : "Error — try again";
+              checkoutBtn.textContent = data.error === "sold_out" ? "Sold Out" : "Error - try again";
               setTimeout(() => {
                 checkoutBtn.disabled = false;
                 checkoutBtn.textContent = "Checkout";
@@ -399,7 +399,7 @@ const TIPS = {
           })
           .catch(() => {
             checkoutBtn.disabled = false;
-            checkoutBtn.textContent = "Error — try again";
+            checkoutBtn.textContent = "Error - try again";
           });
       });
     })();

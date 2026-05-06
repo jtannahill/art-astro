@@ -18,13 +18,13 @@ import {
 
 const description = `How generative weather art is made - real atmospheric data, ${SCAN_POINTS} global scan points, AI interpretation through ${TOTAL_ARTISTS} artist lenses (${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes), natural scarcity from unrepeatable weather events. By James Tannahill.`;
 
-// Strip HTML for FAQ schema text — search engines accept inline HTML in
+// Strip HTML for FAQ schema text - search engines accept inline HTML in
 // answers but stripping keeps the structured data tidy and the visible
 // accordion is the source of truth for the rich version.
 function stripHtml(s: string) {
   return s
     .replace(/<[^>]+>/g, "")
-    .replace(/&mdash;/g, "—")
+    .replace(/ - /g, "-")
     .replace(/&amp;/g, "&")
     .replace(/&deg;/g, "°")
     .replace(/&times;/g, "×")
@@ -83,7 +83,7 @@ const faqSchema = {
 
   <p class="lede">
     The atmosphere is the oldest artist on Earth. It has been painting since
-    before there were eyes to see it &mdash; sculpting light through ice
+    before there were eyes to see it - sculpting light through ice
     crystals, dragging color across horizons, compressing entire landscapes
     into a single hour of sky. This project is an attempt to listen to what
     it's making.
@@ -93,7 +93,7 @@ const faqSchema = {
 
   <p>
     Every day, {asWord(SCAN_POINTS)} points across the planet are sampled for
-    what the atmosphere is actually doing &mdash; not what it looks like on a
+    what the atmosphere is actually doing - not what it looks like on a
     forecast, but its raw physical state. Pressure gradients steep enough to
     bend trees. Winds crossing open water with nothing to slow them down.
     Temperature anomalies where the air is ten degrees warmer or colder than
@@ -112,7 +112,7 @@ const faqSchema = {
       Lesley Tannahill
     </a>
     builds palimpsests where every mark remembers the marks beneath it.
-    These sensibilities are not styles to imitate &mdash; they are ways of
+    These sensibilities are not styles to imitate - they are ways of
     seeing that transform the same pressure reading into radically different
     compositions.
   </p>
@@ -129,7 +129,7 @@ const faqSchema = {
   <p>
     The pipeline runs at dawn UTC. Weather flows in from the
     <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo API</a>
-    (NOAA's GFS model) and is scored on a composite index &mdash; pressure
+    (NOAA's GFS model) and is scored on a composite index - pressure
     anomaly weighted heaviest, then wind, temperature deviation, precipitation,
     humidity. The highest-scoring conditions are sent to a generative model
     that interprets the atmospheric data as original digital artwork. There
@@ -146,7 +146,7 @@ const faqSchema = {
 
   <p>
     A parallel system extracts color palettes from Copernicus Sentinel-2
-    satellite imagery &mdash; the actual colors of Earth as seen from orbit.
+    satellite imagery - the actual colors of Earth as seen from orbit.
     Deserts, glaciers, river deltas, volcanic islands. A seasonal record of
     what the planet looks like from {SATELLITE_ALTITUDE_KM} kilometers up.
   </p>
@@ -158,7 +158,7 @@ const faqSchema = {
   <p>
     For most of the artists in the system, no canvas was ever fed to the
     model. Their understanding comes from art criticism, exhibition catalogs,
-    and the public discourse around their practices &mdash; the same way a
+    and the public discourse around their practices - the same way a
     human art student learns by reading about artists before they ever pick
     up a brush. Each artist is described to the model in a few sentences
     that capture their visual philosophy: Rothko's luminous floating
@@ -170,14 +170,14 @@ const faqSchema = {
   </p>
 
   <p>
-    A small number of artists &mdash; currently
+    A small number of artists - currently
     <a href="/artist/lesley_tannahill/">Lesley Tannahill</a>,
     <a href="/artist/sam_francis/">Sam Francis</a>,
     <a href="/artist/hilma_af_klint/">Hilma af Klint</a>,
     <a href="/artist/joan_mitchell/">Joan Mitchell</a>,
     <a href="/artist/willem_de_kooning/">Willem de Kooning</a>,
     <a href="/artist/helen_frankenthaler/">Helen Frankenthaler</a>, and
-    <a href="/artist/gerhard_richter/">Gerhard Richter</a> &mdash; take a
+    <a href="/artist/gerhard_richter/">Gerhard Richter</a> - take a
     different path. For these, custom <strong>FLUX.1-dev LoRA</strong>
     fine-tunes were trained on small sets of hand-curated canvas
     reproductions, each captioned with title, medium, dimensions, and year.
@@ -204,7 +204,7 @@ const faqSchema = {
     <span>Temperature (K)</span>
     <span>&rarr; Color temperature, saturation</span>
     <span>Temperature anomaly</span>
-    <span>&rarr; How far from the expected &mdash; the drama</span>
+    <span>&rarr; How far from the expected - the drama</span>
     <span>Relative humidity (%)</span>
     <span>&rarr; Atmospheric moisture, softness</span>
     <span>Precipitation (kg/m&sup2;)</span>
@@ -217,8 +217,8 @@ const faqSchema = {
     temperature deviation ({SCORE_WEIGHTS.temperature_deviation}%),
     precipitation ({SCORE_WEIGHTS.precipitation}%), humidity
     ({SCORE_WEIGHTS.humidity}%). The top {TOP_LOCATIONS_PER_DAY} scorers
-    &mdash; with at least {MIN_LAT_LNG_SEPARATION_DEG}&deg; of geographic
-    separation to ensure diversity &mdash; become the day's artwork subjects.
+    - with at least {MIN_LAT_LNG_SEPARATION_DEG}&deg; of geographic
+    separation to ensure diversity - become the day's artwork subjects.
   </p>
 
   <h3>Why GFS?</h3>
@@ -237,9 +237,9 @@ const faqSchema = {
     because it offers the best tradeoff for this project: free global
     coverage at resolution sufficient for macro-scale weather drama, with
     reliable hourly data across all {SCAN_POINTS} scan points simultaneously. The art
-    interprets continental-scale atmospheric patterns &mdash; pressure
+    interprets continental-scale atmospheric patterns - pressure
     systems spanning oceans, temperature fronts crossing mountain ranges
-    &mdash; where GFS excels. The <code>gfs_seamless</code> variant blends
+    - where GFS excels. The <code>gfs_seamless</code> variant blends
     forecast and analysis data for best-available current conditions.
   </p>
 
@@ -250,7 +250,7 @@ const faqSchema = {
     evaluates it on four dimensions: composition, color harmony, complexity,
     and emotional impact. Each piece receives a quality score from 1 to 10.
     This score feeds into the archive, influences print pricing, and helps
-    surface the strongest work. The critic sees only the final image &mdash;
+    surface the strongest work. The critic sees only the final image  - 
     it has no access to the weather data or artist prompt that produced it.
   </p>
 
@@ -260,7 +260,7 @@ const faqSchema = {
     Every evening at 20:00 UTC, a separate system scans the 24-hour GFS
     forecast for all {SCAN_POINTS} scan points, scoring each for predicted visual
     drama using the same composite formula. This produces a ranked list of
-    tomorrow's most promising atmospheric conditions &mdash; a weather drama
+    tomorrow's most promising atmospheric conditions - a weather drama
     forecast that anticipates where the most striking art will come from
     before the pipeline runs.
   </p>
@@ -279,7 +279,7 @@ const faqSchema = {
   <h3>Natural Scarcity</h3>
 
   <p>
-    Every artwork is generated from a one-time atmospheric event &mdash; a
+    Every artwork is generated from a one-time atmospheric event - a
     specific combination of pressure, wind, temperature, and precipitation
     at a specific location and moment. That weather will never occur again.
     Unlike digital assets where scarcity is manufactured by capping supply,
@@ -288,13 +288,13 @@ const faqSchema = {
   </p>
 
   <p>
-    This is closer to photography than to minting &mdash; capturing
+    This is closer to photography than to minting - capturing
     something real, unrepeatable, and time-bound. The atmospheric data is
     archived alongside every piece, timestamped and verifiable against
     NOAA's public records. The weather happened. The art it produced is the
     only one of its kind. Limited edition prints (5 per size) add a physical
     layer of scarcity on top of a natural one. When the last print of a
-    piece sells, that's it &mdash; the weather is gone, the edition is
+    piece sells, that's it - the weather is gone, the edition is
     closed, and the work exists only in the hands of its collectors.
   </p>
 
@@ -305,7 +305,7 @@ const faqSchema = {
     <a href="https://jamestannahill.com" target="_blank" rel="noopener">
       James Tannahill
     </a>. I grew up staring at maps the way other people stared at posters
-    &mdash; tracing coastlines, memorizing the shapes of countries I'd never
+    - tracing coastlines, memorizing the shapes of countries I'd never
     visit, trying to understand how a flat sheet of paper could contain an
     ocean. That impulse never went away. It just found new material.
   </p>
@@ -315,7 +315,7 @@ const faqSchema = {
     constantly rewriting itself, and fundamentally invisible at any useful
     resolution. You can stand in a storm and still only experience a pinhole
     of what the system is doing. This project is my way of seeing more of
-    it &mdash; using the language of the painters who taught me that seeing
+    it - using the language of the painters who taught me that seeing
     is not passive, that abstraction is a form of attention, and that the
     most honest response to something overwhelming is to let it move through
     you and onto the canvas.
@@ -323,7 +323,7 @@ const faqSchema = {
 
   <p>
     The data is real. The locations are real. The weather happened. What
-    the machine makes of it &mdash; and what you make of that &mdash; is
+    the machine makes of it - and what you make of that - is
     where the art lives.
   </p>
 

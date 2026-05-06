@@ -3,7 +3,7 @@
  *
  * Reads src/data/generated/weather.json, renders a 1200×630 PNG for
  * each piece into dist/og/{run_id}/{slug}.png. Skips files that already
- * exist locally — so on a CI run that pre-pulls existing OG images
+ * exist locally - so on a CI run that pre-pulls existing OG images
  * from S3, only new pieces get rendered.
  *
  * Inter Regular + Bold are pulled once from rsms.me (the official Inter
@@ -27,7 +27,7 @@ const CACHE_DIR = join(ROOT, ".cache");
 
 function loadFontFromNodeModules(weight: 400 | 700): ArrayBuffer {
   // @fontsource/inter ships WOFF (and WOFF2) for every Latin/Cyrillic/Greek
-  // subset. We use the latin WOFF subset — satori accepts WOFF (but not WOFF2)
+  // subset. We use the latin WOFF subset - satori accepts WOFF (but not WOFF2)
   // and the Latin alphabet covers everything we render.
   const path = join(
     ROOT,

@@ -4,7 +4,7 @@
  * selector + Generate button calling the production trigger Lambda.
  *
  * Infinite scroll from the production homepage is intentionally not
- * ported — /archive/ already serves the full paginated archive.
+ * ported - /archive/ already serves the full paginated archive.
  */
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
@@ -78,7 +78,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
 ---
 
 <Base
-  title="art.jt — today's weather art"
+  title="art.jt - today's weather art"
   description={`Daily generative art from real atmospheric data. ${TOTAL_ARTISTS} artist lenses, ${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes.`}
 >
   <h1>Today's Weather Art</h1>
@@ -98,7 +98,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
   </div>
 
   {/* Plain-English weather → art map. Same data the model gets, in
-       human terms — so a visitor immediately understands why a piece
+       human terms - so a visitor immediately understands why a piece
        looks the way it does. Detailed grid lives in /about/. */}
   <section class="how">
     <h2>What the weather does</h2>
@@ -132,7 +132,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
       <li>
         <span class="ix">Anomaly</span>
         <span class="ax">→ drama</span>
-        <span class="copy">How far from normal &mdash; the louder the piece.</span>
+        <span class="copy">How far from normal - the louder the piece.</span>
       </li>
     </ol>
   </section>
@@ -228,11 +228,11 @@ const dropdownArtists = ARTISTS.map((a) => ({
         .then((r) => r.json())
         .then((data) => {
           if (data.status === "already_running") {
-            flash("Pipeline is already running — check back in a few minutes");
+            flash("Pipeline is already running - check back in a few minutes");
           } else if (data.status === "cooldown") {
-            flash(data.message ?? "Cooldown active — try again later");
+            flash(data.message ?? "Cooldown active - try again later");
           } else {
-            flash("Generating new art — refresh in ~5 minutes");
+            flash("Generating new art - refresh in ~5 minutes");
           }
         })
         .catch(() => flash("Error triggering pipeline", 3000))
