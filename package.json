@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "pull-data": "tsx scripts/pull-data.ts",
+    "build": "npm run pull-data && astro build",
+    "build:no-pull": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -14,7 +16,10 @@
     "@astrojs/check": "^0.9.9",
     "@astrojs/mdx": "^5.0.4",
     "@astrojs/sitemap": "^3.7.2",
+    "@aws-sdk/client-dynamodb": "^3.1043.0",
+    "@aws-sdk/util-dynamodb": "^3.996.2",
     "astro": "^6.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }
