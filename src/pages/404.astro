@@ -1,0 +1,42 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="404 - art.jt" description="That page doesn't exist.">
+  <div class="x">
+    <p class="big mono">404</p>
+    <h1>That page doesn't exist.</h1>
+    <p class="muted">
+      Maybe a weather event ended, an artist's URL changed, or a link got copied wrong.
+    </p>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/archive/">Archive</a>
+      <a href="/artist/">Artists</a>
+      <a href="/palettes/">Palettes</a>
+      <a href="/map/">Map</a>
+      <a href="/about/">About</a>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .x { padding: 4rem 0; max-width: 540px; }
+  .big { font-size: 5rem; color: var(--color-accent); margin: 0 0 0.5rem; line-height: 1; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.75rem; letter-spacing: -0.01em; }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+  .links a {
+    padding: 0.45rem 0.9rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--color-link);
+    text-decoration: none;
+  }
+  .links a:hover { border-color: #444; }
+</style>

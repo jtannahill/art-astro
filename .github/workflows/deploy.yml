@@ -41,9 +41,10 @@ jobs:
         run: |
           # Sanity: confirm credentials are valid before any S3 work
           aws sts get-caller-identity --output text
-          # Sync everything except hashed assets with a short cache
+          # NOTE: --delete is intentionally NOT used. The S3 prefix also
+          # holds pipeline-written assets (preview-2048.png, satellite
+          # palettes, etc.) that this build does not regenerate.
           aws s3 sync ./dist/ s3://${{ env.S3_BUCKET }}/${{ env.S3_PREFIX }}/ \
-            --delete \
             --cache-control "public, max-age=300" \
             --exclude "_astro/*" \
             --exclude "*.png" \
@@ -51,7 +52,6 @@ jobs:
             --exclude "*.webp" \
             --exclude "*.avif" \
             --exclude "*.svg"
-          # Hashed/binary assets get a long cache
           aws s3 sync ./dist/ s3://${{ env.S3_BUCKET }}/${{ env.S3_PREFIX }}/ \
             --cache-control "public, max-age=31536000, immutable" \
             --exclude "*" \
