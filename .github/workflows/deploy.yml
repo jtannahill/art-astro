@@ -19,6 +19,10 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1
     steps:
       - uses: actions/checkout@v4
 
@@ -29,14 +33,10 @@ jobs:
 
       - run: npm ci
 
-      - name: build
+      - name: build (pulls DynamoDB → astro build)
         run: npm run build
 
       - name: deploy
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
           # Sanity: confirm credentials are valid before any S3 work
           aws sts get-caller-identity --output text
