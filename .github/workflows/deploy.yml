@@ -32,15 +32,15 @@ jobs:
       - name: build
         run: npm run build
 
-      - name: configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: sync to S3
+      - name: deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
+          # Sanity: confirm credentials are valid before any S3 work
+          aws sts get-caller-identity --output text
+          # Sync everything except hashed assets with a short cache
           aws s3 sync ./dist/ s3://${{ env.S3_BUCKET }}/${{ env.S3_PREFIX }}/ \
             --delete \
             --cache-control "public, max-age=300" \
@@ -50,7 +50,7 @@ jobs:
             --exclude "*.webp" \
             --exclude "*.avif" \
             --exclude "*.svg"
-          # Hashed assets get a long cache
+          # Hashed/binary assets get a long cache
           aws s3 sync ./dist/ s3://${{ env.S3_BUCKET }}/${{ env.S3_PREFIX }}/ \
             --cache-control "public, max-age=31536000, immutable" \
             --exclude "*" \
@@ -60,9 +60,6 @@ jobs:
             --include "*.webp" \
             --include "*.avif" \
             --include "*.svg"
-
-      - name: invalidate CloudFront
-        run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "${{ env.INVALIDATION_PATHS }}"
