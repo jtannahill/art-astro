@@ -1,0 +1,155 @@
+---
+/**
+ * Mapbox dark globe with weather artwork + palette markers.
+ * Marker data baked into the page at build time; Mapbox renders client-side.
+ *
+ * The pk.* token below is a public client token — same one production uses
+ * (it's exposed in every page's HTML there too).
+ */
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+const PROD = "https://art.jamestannahill.com";
+
+// Public client-side Mapbox token. GitHub's secret-scanning rule blocks
+// pk.* tokens from being committed even though they're meant to ship in
+// browser bundles, so we read it from a build-time env var instead.
+const MAPBOX_TOKEN = import.meta.env.PUBLIC_MAPBOX_TOKEN ?? "";
+
+const allWeather = await getCollection("weather");
+const allPalettes = await getCollection("palettes");
+
+interface MarkerW {
+  lat: number;
+  lng: number;
+  title: string;
+  artist: string;
+  url: string;
+  img: string;
+}
+interface MarkerP {
+  lat: number;
+  lng: number;
+  title: string;
+  url: string;
+  img: string;
+}
+
+const weatherMarkers: MarkerW[] = allWeather
+  .filter((w) => w.data.lat != null && w.data.lng != null && w.data.run_id && w.data.slug)
+  .map((w) => ({
+    lat: w.data.lat!,
+    lng: w.data.lng!,
+    title: w.data.slug.replace(/-/g, " "),
+    artist: w.data.artist,
+    url: `/next/weather/${w.data.run_id}/${w.data.slug}/`,
+    img: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
+  }));
+
+// One palette pin per location (latest sample)
+const latestPerLocation = new Map<string, (typeof allPalettes)[number]>();
+for (const p of allPalettes) {
+  const cur = latestPerLocation.get(p.data.location_slug);
+  if (!cur || (p.data.date ?? "").localeCompare(cur.data.date ?? "") > 0) {
+    latestPerLocation.set(p.data.location_slug, p);
+  }
+}
+const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
+  .filter((p) => p.data.lat != null && p.data.lng != null)
+  .map((p) => ({
+    lat: p.data.lat!,
+    lng: p.data.lng!,
+    title: p.data.location_slug.replace(/-/g, " "),
+    url: `/next/palettes/${p.data.location_slug}/`,
+    img: `${PROD}/palettes/${p.data.date}/${p.data.location_slug}/source-thumb.jpg`,
+  }));
+---
+
+<Base
+  title="World Map - art.jt / next"
+  description="Every artwork and palette plotted on a dark globe."
+>
+  <h1>World Map</h1>
+  <p class="lede muted">
+    Every artwork and palette location, plotted on a Mapbox dark globe.
+    {weatherMarkers.length} weather pins · {paletteMarkers.length} palette pins.
+  </p>
+
+  <div id="map" class="map"></div>
+
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" />
+  <script
+    src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"
+    is:inline
+  ></script>
+
+  <script
+    is:inline
+    define:vars={{ MAPBOX_TOKEN, weatherMarkers, paletteMarkers }}
+  >
+    function init() {
+      if (typeof mapboxgl === "undefined") {
+        setTimeout(init, 60);
+        return;
+      }
+      mapboxgl.accessToken = MAPBOX_TOKEN;
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/dark-v11",
+        projection: "globe",
+        zoom: 1.4,
+        center: [-30, 30],
+      });
+      map.on("style.load", () => {
+        map.setFog({
+          color: "rgb(20, 20, 30)",
+          "high-color": "rgb(40, 30, 60)",
+          "horizon-blend": 0.05,
+          "space-color": "rgb(8, 8, 14)",
+          "star-intensity": 0.6,
+        });
+      });
+
+      function popupHtml(m, kind) {
+        return (
+          '<div style="font-family:-apple-system,sans-serif;color:#ccc;background:#0a0a0a;border-radius:6px;overflow:hidden;width:200px;">' +
+          '<img src="' + m.img + '" loading="lazy" style="width:100%;display:block;background:#000;aspect-ratio:1;object-fit:cover;">' +
+          '<div style="padding:0.5rem 0.75rem;">' +
+          '<div style="font-size:0.85rem;color:#fff;text-transform:capitalize;margin-bottom:0.2rem;">' + m.title + '</div>' +
+          (kind === "w" ? '<div style="font-size:0.7rem;color:#c4b5fd;">' + m.artist.replace(/_/g, " ") + '</div>' : '<div style="font-size:0.7rem;color:#888;">satellite palette</div>') +
+          '<a href="' + m.url + '" style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#8ab4f8;">view →</a>' +
+          '</div></div>'
+        );
+      }
+
+      function addPin(m, color, kind) {
+        const el = document.createElement("div");
+        el.className = "pin pin-" + kind;
+        el.style.cssText =
+          "width:10px;height:10px;border-radius:50%;background:" + color +
+          ";box-shadow:0 0 6px " + color + ";cursor:pointer;border:1px solid #fff3;";
+        new mapboxgl.Marker(el)
+          .setLngLat([m.lng, m.lat])
+          .setPopup(new mapboxgl.Popup({ closeButton: false, maxWidth: "220px" }).setHTML(popupHtml(m, kind)))
+          .addTo(map);
+      }
+
+      weatherMarkers.forEach((m) => addPin(m, "#c4b5fd", "w"));
+      paletteMarkers.forEach((m) => addPin(m, "#4ade80", "p"));
+    }
+    init();
+  </script>
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  .lede { max-width: 60ch; margin: 0 0 1.5rem; }
+  .map {
+    height: 70vh;
+    min-height: 500px;
+    border-radius: 8px;
+    border: 1px solid #1f1f1f;
+    overflow: hidden;
+    background: #0a0a0a;
+  }
+</style>

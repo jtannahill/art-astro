@@ -1,0 +1,150 @@
+---
+/**
+ * Per-location palette history. One page per palette location, showing
+ * every sample over time newest-first.
+ */
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Base from "../../../layouts/Base.astro";
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const all = await getCollection("palettes");
+  const slugs = new Set<string>();
+  for (const p of all) slugs.add(p.data.location_slug);
+  return [...slugs].map((s) => ({ params: { location_slug: s } }));
+};
+
+const { location_slug } = Astro.params;
+
+const all = await getCollection("palettes");
+const samples = all
+  .filter((p) => p.data.location_slug === location_slug)
+  .map((p) => p.data)
+  .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+
+if (samples.length === 0) {
+  return Astro.rewrite("/next/404/");
+}
+
+const PROD = "https://art.jamestannahill.com";
+const display = (location_slug ?? "").replace(/-/g, " ");
+const latest = samples[0];
+
+function fmtCoords(lat?: number, lng?: number) {
+  if (lat == null || lng == null) return "";
+  const ns = lat >= 0 ? "N" : "S";
+  const ew = lng >= 0 ? "E" : "W";
+  return `${Math.abs(lat).toFixed(1)}°${ns}, ${Math.abs(lng).toFixed(1)}°${ew}`;
+}
+---
+
+<Base
+  title={`${display} palette - art.jt / next`}
+  description={`Sentinel-2 color samples from ${display}. ${samples.length} samples archived.`}
+  canonicalPath={`/palettes/${location_slug}/`}
+>
+  <nav class="crumbs">
+    <a href="/next/">Home</a>
+    <span>/</span>
+    <a href="/next/palettes/">Palettes</a>
+    <span>/</span>
+    <span>{display}</span>
+  </nav>
+
+  <h1 class="cap">{display}</h1>
+  <p class="lede muted">
+    {fmtCoords(latest.lat, latest.lng)} · {samples.length}
+    {samples.length === 1 ? "sample" : "samples"} · most recent {latest.date}
+  </p>
+
+  <div class="grid">
+    {samples.map((s) => (
+      <article class="card">
+        <img
+          src={`${PROD}/palettes/${s.date}/${s.location_slug}/source-thumb.jpg`}
+          alt={`${s.location_slug} satellite ${s.date}`}
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="card-body">
+          <h2>{s.date}</h2>
+          {s.season && <p class="meta">{s.season}</p>}
+          <div class="swatches">
+            {s.colors.map((c) => <span class="swatch" style={`background:${c}`} title={c}></span>)}
+          </div>
+          <ul class="hex-list">
+            {s.colors.map((c) => <li class="mono">{c}</li>)}
+          </ul>
+          {s.mood && <p class="mood">{s.mood}</p>}
+        </div>
+      </article>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .crumbs {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .crumbs a { color: var(--color-link); }
+  h1.cap { font-size: 2rem; margin: 0 0 0.25rem; letter-spacing: -0.02em; text-transform: capitalize; }
+  h2 { font-size: 0.9rem; margin: 0 0 0.25rem; color: #fff; font-family: var(--font-mono); }
+  .lede { margin: 0 0 2rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: #0a0a0a;
+  }
+  .card-body { padding: 0.85rem 1rem 1rem; }
+  .meta { color: var(--color-accent); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 0.5rem; }
+  .swatches {
+    display: flex;
+    height: 22px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 0 0.5rem;
+  }
+  .swatch { flex: 1; }
+  .hex-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .hex-list li {
+    color: #ccc;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.4rem;
+    background: #181818;
+    border-radius: 3px;
+  }
+  .mood {
+    color: #ccc;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-style: italic;
+    margin: 0;
+  }
+</style>

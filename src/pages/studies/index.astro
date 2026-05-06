@@ -1,0 +1,55 @@
+---
+/**
+ * Studies index. Studies live under PK=STUDY#<id> in DynamoDB; they
+ * are not yet wired into the data adapter (no studies have been
+ * published as of this build). When `study_admin` starts publishing,
+ * extend pull-data.ts with a third collection and surface them here.
+ */
+import Base from "../../layouts/Base.astro";
+const studies: { study_id: string; title: string; description?: string; days?: number }[] = [];
+---
+
+<Base
+  title="Studies - art.jt / next"
+  description="Multi-day weather event studies — tracking atmospheric phenomena across days and geographies through generative art."
+>
+  <h1>Studies</h1>
+  <p class="lede muted">
+    Studies track weather events across multiple days and geographies — following
+    a storm system as it moves, sampling atmospheric conditions at different points,
+    and comparing how the same event produces different art over time. The system
+    auto-detects persistent and clustered weather patterns; studies can also be
+    created manually.
+  </p>
+
+  {studies.length === 0 ? (
+    <div class="empty">
+      <p>No active studies yet. Check back soon — new studies appear automatically as the system detects multi-day weather events.</p>
+    </div>
+  ) : (
+    <div class="grid">
+      {studies.map((s) => (
+        <a class="card" href={`/next/studies/${s.study_id}/`}>
+          <div class="card-body">
+            <h2>{s.title}</h2>
+            {s.description && <p class="desc">{s.description}</p>}
+            {s.days != null && <p class="meta">{s.days} days tracked</p>}
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  .lede { max-width: 60ch; margin: 0 0 2rem; }
+  .empty {
+    border: 1px dashed #2a2a2a;
+    border-radius: 8px;
+    padding: 2rem 1.5rem;
+    color: var(--color-muted);
+    background: #0d0d0d;
+  }
+  .empty p { margin: 0; line-height: 1.6; }
+</style>

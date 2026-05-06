@@ -1,0 +1,160 @@
+---
+/**
+ * Style comparison: group pieces into 5° lat/lng cells, keep cells where
+ * 3+ artists have produced work, show one piece per artist for each cell.
+ * Ported from _find_comparisons() in lambdas/site_rebuild/handler.py.
+ */
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { ARTISTS_BY_KEY } from "../../data/artists.ts";
+
+const PROD = "https://art.jamestannahill.com";
+
+const all = await getCollection("weather");
+
+interface Cell {
+  key: string;
+  pieces: Map<string, (typeof all)[number]>;
+  // Pinned to the first piece's coords so the location label stays stable
+  anchor: (typeof all)[number] | null;
+}
+
+const cells = new Map<string, Cell>();
+const sorted = [...all].sort((a, b) =>
+  (b.data.run_id ?? "").localeCompare(a.data.run_id ?? "")
+);
+for (const w of sorted) {
+  const lat = w.data.lat;
+  const lng = w.data.lng;
+  if (lat == null || lng == null) continue;
+  const key = `${Math.floor(lat / 5) * 5},${Math.floor(lng / 5) * 5}`;
+  let cell = cells.get(key);
+  if (!cell) {
+    cell = { key, pieces: new Map(), anchor: w };
+    cells.set(key, cell);
+  }
+  if (!cell.pieces.has(w.data.artist)) cell.pieces.set(w.data.artist, w);
+}
+
+function fmtCoords(lat: number, lng: number) {
+  const ns = lat >= 0 ? "N" : "S";
+  const ew = lng >= 0 ? "E" : "W";
+  return `${Math.abs(lat).toFixed(0)}°${ns}, ${Math.abs(lng).toFixed(0)}°${ew}`;
+}
+function fmtSlug(slug: string) {
+  return slug.replace(/-/g, " ");
+}
+
+const comparisons = [...cells.values()]
+  .filter((c) => c.pieces.size >= 3)
+  .map((c) => {
+    const anchor = c.anchor!;
+    const pieces = [...c.pieces.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([artist_key, w]) => ({
+        artist_key,
+        artist_name: ARTISTS_BY_KEY[artist_key]?.display ?? artist_key.replace(/_/g, " "),
+        img_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
+        url: `/next/weather/${w.data.run_id}/${w.data.slug}/`,
+      }));
+    return {
+      location: fmtSlug(anchor.data.slug),
+      coords: fmtCoords(anchor.data.lat ?? 0, anchor.data.lng ?? 0),
+      temp: anchor.data.temp,
+      wind: anchor.data.wind_speed,
+      pressure: anchor.data.pressure,
+      date: anchor.data.date,
+      artist_count: pieces.length,
+      pieces,
+    };
+  })
+  .sort((a, b) => b.artist_count - a.artist_count)
+  .slice(0, 10);
+---
+
+<Base
+  title="Style Comparison - art.jt / next"
+  description="See how 16 different artists interpret the same atmospheric conditions."
+>
+  <h1>Style Comparison</h1>
+  <p class="lede muted">
+    Same atmospheric conditions, sixteen artistic lenses. Each row shows one
+    location's weather data interpreted through every artist that has rendered it.
+    The data is identical. The vision is not.
+  </p>
+
+  {comparisons.length === 0 ? (
+    <p class="empty">No 3+ artist comparisons available yet.</p>
+  ) : (
+    comparisons.map((comp) => (
+      <article class="comp">
+        <header>
+          <h2>{comp.location}</h2>
+          <p class="meta">
+            {comp.coords}
+            {comp.temp != null && <> · <span title="Drives color palette">{comp.temp}°C</span></>}
+            {comp.wind != null && <> · <span title="Drives kinetic energy">{comp.wind} m/s</span></>}
+            {comp.pressure != null && <> · <span title="Compositional weight">{comp.pressure} hPa</span></>}
+            <span class="muted"> · {comp.artist_count} artists</span>
+          </p>
+        </header>
+        <div class="row">
+          {comp.pieces.map((p) => (
+            <a class="cell" href={p.url}>
+              <img src={p.img_url} alt={`${p.artist_name} interpretation`} loading="lazy" decoding="async" />
+              <span class="caption">{p.artist_name}</span>
+            </a>
+          ))}
+        </div>
+      </article>
+    ))
+  )}
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.05rem; margin: 0; color: #fff; text-transform: capitalize; }
+  .lede { max-width: 60ch; margin: 0 0 2rem; }
+  .empty { color: var(--color-muted); padding: 2rem 0; }
+  .meta { color: #888; font-size: 0.85rem; margin: 0.2rem 0 0; }
+  .meta span[title] { border-bottom: 1px dotted var(--color-muted); cursor: help; }
+
+  .comp {
+    margin: 0 0 3rem;
+    border: 1px solid #222;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #111;
+  }
+  .comp header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0;
+  }
+  .cell {
+    border-right: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+    color: inherit;
+    background: #0a0a0a;
+    transition: background 0.15s;
+    text-decoration: none;
+  }
+  .cell:hover { background: #15152a; text-decoration: none; }
+  .cell img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    display: block;
+    background: #000;
+  }
+  .caption {
+    display: block;
+    color: var(--color-accent);
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+</style>

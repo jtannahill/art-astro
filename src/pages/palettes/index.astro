@@ -1,0 +1,118 @@
+---
+/**
+ * Satellite color palettes index. One card per location, showing the
+ * latest sample's swatches + mood + source thumb. Latest-first.
+ */
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+const PROD = "https://art.jamestannahill.com";
+const all = await getCollection("palettes");
+
+const latestPerLocation = new Map<string, (typeof all)[number]>();
+for (const p of all) {
+  const cur = latestPerLocation.get(p.data.location_slug);
+  if (!cur || (p.data.date ?? "").localeCompare(cur.data.date ?? "") > 0) {
+    latestPerLocation.set(p.data.location_slug, p);
+  }
+}
+const palettes = [...latestPerLocation.values()]
+  .sort((a, b) => (b.data.date ?? "").localeCompare(a.data.date ?? ""))
+  .map((p) => ({
+    location_slug: p.data.location_slug,
+    date: p.data.date,
+    colors: p.data.colors,
+    mood: p.data.mood,
+    samples_count: all.filter((x) => x.data.location_slug === p.data.location_slug).length,
+  }));
+
+function fmtSlug(s: string) {
+  return s.replace(/-/g, " ");
+}
+---
+
+<Base
+  title="Satellite Color Palettes - art.jt / next"
+  description="Color palettes extracted from Copernicus Sentinel-2 satellite imagery — Earth's real colors as seen from 786 km above."
+>
+  <h1>Satellite Color Palettes</h1>
+  <p class="lede muted">
+    Every day, the system pulls true-color imagery from
+    <a href="https://dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Sentinel-2</a>
+    — the European Space Agency's Earth-observation constellation, 786&nbsp;km above the surface — and
+    extracts dominant colors via median-cut quantization. {palettes.length} locations,
+    {all.length} samples archived.
+  </p>
+
+  {palettes.length === 0 ? (
+    <p class="empty">No palettes available yet.</p>
+  ) : (
+    <div class="grid">
+      {palettes.map((p) => (
+        <a class="card" href={`/next/palettes/${p.location_slug}/`}>
+          <img
+            src={`${PROD}/palettes/${p.date}/${p.location_slug}/source-thumb.jpg`}
+            alt={`${p.location_slug} satellite imagery`}
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="card-body">
+            <h3>{fmtSlug(p.location_slug)}</h3>
+            <div class="swatches" title="Median-cut quantization from Sentinel-2 at 10 m ground resolution">
+              {p.colors.map((c) => <span class="swatch" style={`background:${c}`} title={c}></span>)}
+            </div>
+            {p.mood && <p class="mood">{p.mood}</p>}
+            <p class="meta">{p.samples_count} samples · latest {p.date}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</Base>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h3 { font-size: 0.95rem; margin: 0 0 0.4rem; color: #fff; text-transform: capitalize; }
+  .lede { max-width: 60ch; margin: 0 0 2rem; }
+  .empty { color: var(--color-muted); padding: 2rem 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    display: block;
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #333; text-decoration: none; }
+  .card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #0a0a0a;
+  }
+  .card-body { padding: 0.7rem 0.85rem 0.85rem; }
+  .swatches {
+    display: flex;
+    height: 18px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0.25rem 0 0.5rem;
+  }
+  .swatch { flex: 1; }
+  .mood {
+    color: #ccc;
+    font-size: 0.78rem;
+    margin: 0 0 0.4rem;
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .meta { color: var(--color-muted); font-size: 0.7rem; margin: 0; }
+</style>
