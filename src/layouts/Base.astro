@@ -51,9 +51,26 @@ const canonical = canonicalPath
       <slot />
     </main>
     <footer class="ftr">
-      Generative weather art by James Tannahill ·
-      <a href="/about/">about</a> ·
-      <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener">CC BY-NC-ND 4.0</a>
+      <form class="ftr-subscribe" data-subscribe novalidate>
+        <label for="ftr-email" class="ftr-sub-label">Daily digest</label>
+        <input
+          id="ftr-email"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          autocomplete="email"
+          inputmode="email"
+        />
+        <button type="submit">Subscribe</button>
+        <span class="ftr-sub-msg" data-subscribe-msg aria-live="polite"></span>
+      </form>
+      <p class="ftr-meta">
+        Generative weather art by James Tannahill ·
+        <a href="/about/">about</a> ·
+        <a href="/rss.xml">rss</a> ·
+        <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener">CC BY-NC-ND 4.0</a>
+      </p>
     </footer>
 
     {/* Site-wide search modal. Pagefind UI is lazy-loaded on first
@@ -69,6 +86,61 @@ const canonical = canonicalPath
     </div>
 
     <script is:inline>
+      // Newsletter signup → art-api Lambda Function URL POST /subscribe.
+      // Inline + delegated so the form keeps working across ClientRouter
+      // page swaps without rebinding listeners per navigation.
+      (function () {
+        const SUBSCRIBE_URL =
+          "https://kvorpfc3nbj6h7otsc2634duxm0xtqis.lambda-url.us-east-1.on.aws/subscribe";
+        document.addEventListener("submit", async (e) => {
+          const form = e.target.closest("[data-subscribe]");
+          if (!form) return;
+          e.preventDefault();
+          const input = form.querySelector('input[type="email"]');
+          const button = form.querySelector("button[type=submit]");
+          const msg = form.querySelector("[data-subscribe-msg]");
+          msg.className = "ftr-sub-msg";
+          msg.textContent = "";
+          const email = (input.value || "").trim();
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+            msg.textContent = "Please enter a valid email.";
+            msg.classList.add("err");
+            return;
+          }
+          button.disabled = true;
+          button.textContent = "...";
+          try {
+            const r = await fetch(SUBSCRIBE_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, source: "site_footer" }),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (r.ok && data.ok) {
+              msg.textContent = "Subscribed. Check your inbox for the next digest.";
+              msg.classList.add("ok");
+              input.value = "";
+            } else if (r.status === 400) {
+              msg.textContent = data.error || "Please enter a valid email.";
+              msg.classList.add("err");
+            } else {
+              // Duplicate subscriptions throw on the server (DynamoDB
+              // ConditionExpression). Treat as success from the user's
+              // perspective so they're not nagged.
+              msg.textContent = "You're on the list.";
+              msg.classList.add("ok");
+              input.value = "";
+            }
+          } catch {
+            msg.textContent = "Connection error. Try again.";
+            msg.classList.add("err");
+          } finally {
+            button.disabled = false;
+            button.textContent = "Subscribe";
+          }
+        });
+      })();
+
       (function () {
         const modal = document.querySelector("[data-search-modal]");
         if (!modal) return;
@@ -287,6 +359,59 @@ const canonical = canonicalPath
         font-size: 0.8rem;
         color: var(--color-muted);
       }
+      .ftr-subscribe {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+        margin: 0 0 1rem;
+      }
+      .ftr-sub-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--color-muted);
+        margin-right: 0.25rem;
+      }
+      .ftr-subscribe input[type="email"] {
+        flex: 1 1 220px;
+        min-width: 0;
+        background: #0e0e1a;
+        border: 1px solid #2a2a3e;
+        color: var(--color-fg);
+        font: inherit;
+        padding: 0.45rem 0.7rem;
+        border-radius: 6px;
+        outline: none;
+      }
+      .ftr-subscribe input[type="email"]:focus {
+        border-color: var(--color-accent);
+      }
+      .ftr-subscribe button {
+        padding: 0.45rem 0.95rem;
+        background: linear-gradient(135deg, #2a1a4e, #1a1a3e);
+        border: 1px solid #c4b5fd44;
+        border-radius: 6px;
+        color: var(--color-accent);
+        font: inherit;
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .ftr-subscribe button:hover {
+        border-color: #c4b5fd88;
+        background: linear-gradient(135deg, #3a2a6e, #2a2a5e);
+      }
+      .ftr-subscribe button:disabled { opacity: 0.5; cursor: default; }
+      .ftr-sub-msg {
+        font-size: 0.75rem;
+        color: var(--color-muted);
+        flex-basis: 100%;
+        min-height: 1.1em;
+      }
+      .ftr-sub-msg.ok { color: #4ade80; }
+      .ftr-sub-msg.err { color: #ff8b8b; }
+      .ftr-meta { margin: 0; }
     </style>
   </body>
 </html>
