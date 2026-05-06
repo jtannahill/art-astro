@@ -18,9 +18,11 @@ const weatherSchema = z.object({
   lat: z.number().optional(),
   lng: z.number().optional(),
   temp: z.number().optional(),
+  temp_anomaly: z.number().optional(),
   wind_speed: z.number().optional(),
   wind_direction: z.number().optional(),
   pressure: z.number().optional(),
+  pressure_gradient: z.number().optional(),
   humidity: z.number().optional(),
   precipitation: z.number().optional(),
   score: z.number().optional(),
@@ -28,6 +30,9 @@ const weatherSchema = z.object({
   rationale: z.string().default(""),
   canvas_format: z.string().default(""),
   created_at: z.string().default(""),
+  renderer: z.string().default(""),
+  has_8k: z.boolean().default(false),
+  has_svg: z.boolean().default(false),
 });
 
 const paletteSchema = z.object({

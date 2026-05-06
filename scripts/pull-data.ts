@@ -60,9 +60,11 @@ interface WeatherRow {
   lat?: number;
   lng?: number;
   temp?: number;
+  temp_anomaly?: number;
   wind_speed?: number;
   wind_direction?: number;
   pressure?: number;
+  pressure_gradient?: number;
   humidity?: number;
   precipitation?: number;
   score?: number;
@@ -70,6 +72,9 @@ interface WeatherRow {
   rationale: string;
   canvas_format: string;
   created_at: string;
+  renderer: string;
+  has_8k: boolean;
+  has_svg: boolean;
 }
 
 interface PaletteRow {
@@ -85,6 +90,12 @@ interface PaletteRow {
   source_key?: string;
 }
 
+function asBool(v: unknown): boolean {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") return v.toLowerCase() === "true";
+  return false;
+}
+
 function shapeWeather(it: Record<string, unknown>): WeatherRow {
   return {
     pk: asString(it.PK),
@@ -96,9 +107,11 @@ function shapeWeather(it: Record<string, unknown>): WeatherRow {
     lat: asNumber(it.lat),
     lng: asNumber(it.lng),
     temp: asNumber(it.temp),
+    temp_anomaly: asNumber(it.temp_anomaly),
     wind_speed: asNumber(it.wind_speed),
     wind_direction: asNumber(it.wind_direction),
     pressure: asNumber(it.pressure),
+    pressure_gradient: asNumber(it.pressure_gradient),
     humidity: asNumber(it.humidity),
     precipitation: asNumber(it.precipitation),
     score: asNumber(it.score),
@@ -106,6 +119,9 @@ function shapeWeather(it: Record<string, unknown>): WeatherRow {
     rationale: asString(it.rationale),
     canvas_format: asString(it.canvas_format),
     created_at: asString(it.created_at),
+    renderer: asString(it.renderer),
+    has_8k: asBool(it.has_8k),
+    has_svg: asBool(it.has_svg),
   };
 }
 

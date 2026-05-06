@@ -1,0 +1,365 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Base from "../../../../layouts/Base.astro";
+import { ARTISTS_BY_KEY } from "../../../../data/artists.ts";
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const all = await getCollection("weather");
+  return all
+    .filter((w) => w.data.run_id && w.data.slug)
+    .map((w) => ({
+      params: { run_id: w.data.run_id, slug: w.data.slug },
+      props: { piece: w.data },
+    }));
+};
+
+const { piece } = Astro.props as { piece: import("astro:content").CollectionEntry<"weather">["data"] };
+
+const PROD = "https://art.jamestannahill.com";
+const WATERMARK_URL = "https://6sdaen4674towfh6p3lwnb4dta0cggvr.lambda-url.us-east-1.on.aws";
+
+const previewUrl = `${PROD}/weather/${piece.run_id}/${piece.slug}/preview-2048.png`;
+const svgUrl = `${PROD}/weather/${piece.run_id}/${piece.slug}/artwork.svg`;
+const printPageUrl = `${PROD}/weather/${piece.run_id}/${piece.slug}/`;
+
+const artist = ARTISTS_BY_KEY[piece.artist];
+const artistName = artist?.display ?? piece.artist.replace(/_/g, " ");
+
+function pretty(slug: string) {
+  return slug
+    .split("-")
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(" ");
+}
+
+function coords(lat?: number, lng?: number) {
+  if (lat == null || lng == null) return "";
+  const ns = lat >= 0 ? "N" : "S";
+  const ew = lng >= 0 ? "E" : "W";
+  return `${Math.abs(lat).toFixed(0)}°${ns}, ${Math.abs(lng).toFixed(0)}°${ew}`;
+}
+
+const title = pretty(piece.slug);
+const description =
+  piece.rationale && piece.rationale.length > 0
+    ? piece.rationale.slice(0, 200) + (piece.rationale.length > 200 ? "..." : "")
+    : `Generative weather art at ${title} on ${piece.date}.`;
+
+const [w, h] = (piece.canvas_format || "2048x2048").split("x");
+
+const visualArtwork = {
+  "@context": "https://schema.org",
+  "@type": "VisualArtwork",
+  name: `${title} - ${piece.date}`,
+  description: piece.rationale,
+  url: `${PROD}/weather/${piece.run_id}/${piece.slug}/`,
+  image: previewUrl,
+  dateCreated: piece.created_at || piece.date,
+  artMedium: `Digital - generative art from atmospheric data${piece.renderer === "flux-1.1-pro" ? " (Flux 1.1 Pro)" : " (SVG)"}`,
+  artform: "Generative Art",
+  artworkSurface: "Digital",
+  width: { "@type": "Distance", name: `${w}px` },
+  height: { "@type": "Distance", name: `${h}px` },
+  creator: { "@type": "Person", name: "James Tannahill", url: "https://jamestannahill.com" },
+  license: "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+  copyrightHolder: { "@type": "Person", name: "James Tannahill" },
+  copyrightYear: "2026",
+  locationCreated: {
+    "@type": "Place",
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: piece.lat ?? "",
+      longitude: piece.lng ?? "",
+    },
+  },
+  about: [
+    { "@type": "Thing", name: "Weather Art" },
+    { "@type": "Thing", name: artistName },
+    { "@type": "Thing", name: "Abstract Expressionism" },
+    { "@type": "Thing", name: "Generative Art" },
+  ],
+};
+
+const breadcrumb = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${PROD}/` },
+    { "@type": "ListItem", position: 2, name: "Archive", item: `${PROD}/weather/` },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: piece.run_id,
+      item: `${PROD}/weather/${piece.run_id}/`,
+    },
+    { "@type": "ListItem", position: 4, name: title },
+  ],
+};
+
+const TIPS = {
+  pressure:
+    "Sea-level atmospheric pressure. Deep lows create density, weight, and compressed energy. High pressure opens up the canvas.",
+  gradient:
+    "Rate of pressure change across the region. Steep gradients drive turbulent compositions; flat gradients yield calm work.",
+  wind:
+    "Wind speed drives kinetic energy. Strong winds produce sweeping directional strokes; calm air yields stillness.",
+  temp:
+    "Surface temperature shapes the color palette. Heat pushes toward saturated hues; cold toward stark contrasts.",
+  anomaly:
+    "Deviation from the average temperature at this latitude. Large anomalies intensify the visual drama.",
+  humidity:
+    "Atmospheric moisture content. High humidity softens edges and blends colors; dry air sharpens boundaries.",
+  precipitation:
+    "Active rainfall or snowfall. Adds textural density - dripping, pooling, layered opacity effects.",
+  score:
+    "Composite score: pressure anomaly (30%) + wind (25%) + temp anomaly (20%) + precipitation (15%) + humidity (10%). Higher = more dramatic conditions.",
+};
+---
+
+<Base title={`${title} - ${piece.date} - art.jt / next`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(visualArtwork)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={`${title} - Weather Art - ${piece.date}`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={previewUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={previewUrl} />
+  </Fragment>
+
+  <nav class="crumbs">
+    <a href="/next/">Home</a>
+    <span>/</span>
+    <a href="/next/archive/">Archive</a>
+    <span>/</span>
+    <span class="muted">{piece.run_id}</span>
+    <span>/</span>
+    <span>{title}</span>
+  </nav>
+
+  <h1>{title}</h1>
+  <p class="lede muted">
+    {coords(piece.lat, piece.lng)} ·
+    <a href={`/next/artist/${piece.artist}/`}>{artistName}</a> ·
+    {piece.date}
+  </p>
+
+  <figure class="hero">
+    <img src={previewUrl} alt={`${piece.slug} weather artwork`} loading="eager" decoding="async" />
+  </figure>
+
+  <div class="actions">
+    <a class="btn primary" href={printPageUrl} rel="noopener">Buy print →</a>
+    {piece.has_8k && (
+      <a class="btn" href={`${WATERMARK_URL}?r=${piece.run_id}&s=${piece.slug}&z=8k`}
+        download={`${piece.slug}-${piece.artist}-${piece.run_id}-8k.png`}>Download PNG (8K)</a>
+    )}
+    <a class="btn" href={`${WATERMARK_URL}?r=${piece.run_id}&s=${piece.slug}&z=4k`}
+      download={`${piece.slug}-${piece.artist}-${piece.run_id}-4k.png`}>Download PNG (4K)</a>
+    {piece.has_svg && (
+      <a class="btn ghost" href={svgUrl}
+        download={`${piece.slug}-${piece.artist}-${piece.run_id}-vector.svg`}>Download SVG</a>
+    )}
+  </div>
+
+  {piece.rationale && (
+    <section class="rationale">
+      <h2>Creative Rationale</h2>
+      <p>{piece.rationale}</p>
+    </section>
+  )}
+
+  <section class="meta">
+    <h2>Atmospheric Data</h2>
+    <dl>
+      <dt>Date</dt>
+      <dd>{piece.date}</dd>
+      <dt>Location</dt>
+      <dd>{coords(piece.lat, piece.lng)} ({title})</dd>
+      {piece.pressure != null && (
+        <>
+          <dt><span title={TIPS.pressure}>Pressure</span></dt>
+          <dd>
+            {piece.pressure} hPa
+            {piece.pressure_gradient != null && (
+              <span class="muted"> (<span title={TIPS.gradient}>gradient: {piece.pressure_gradient}</span>)</span>
+            )}
+          </dd>
+        </>
+      )}
+      {piece.wind_speed != null && (
+        <>
+          <dt><span title={TIPS.wind}>Wind</span></dt>
+          <dd>{piece.wind_speed} m/s{piece.wind_direction != null && <> from {piece.wind_direction}°</>}</dd>
+        </>
+      )}
+      {piece.temp != null && (
+        <>
+          <dt><span title={TIPS.temp}>Temperature</span></dt>
+          <dd>
+            {piece.temp}°C
+            {piece.temp_anomaly != null && (
+              <span class="muted"> (<span title={TIPS.anomaly}>anomaly: {piece.temp_anomaly}°C</span>)</span>
+            )}
+          </dd>
+        </>
+      )}
+      {piece.humidity != null && (
+        <>
+          <dt><span title={TIPS.humidity}>Humidity</span></dt>
+          <dd>{piece.humidity}%</dd>
+        </>
+      )}
+      {piece.precipitation != null && piece.precipitation > 0 && (
+        <>
+          <dt><span title={TIPS.precipitation}>Precipitation</span></dt>
+          <dd>{piece.precipitation} mm</dd>
+        </>
+      )}
+      {piece.score != null && (
+        <>
+          <dt><span title={TIPS.score}>Visual Interest Score</span></dt>
+          <dd>{piece.score}</dd>
+        </>
+      )}
+    </dl>
+  </section>
+
+  <section class="meta">
+    <h2>Technical Details</h2>
+    <dl>
+      <dt>Model</dt>
+      <dd>{piece.renderer === "flux-1.1-pro" ? "Flux 1.1 Pro (Black Forest Labs)" : "Claude Sonnet 4 via Amazon Bedrock"}</dd>
+      <dt>Artist Inspiration</dt>
+      <dd><a href={`/next/artist/${piece.artist}/`}>{artistName}</a></dd>
+      <dt>Weather Source</dt>
+      <dd>Open-Meteo API (GFS model)</dd>
+      <dt>Format</dt>
+      <dd>
+        {piece.renderer === "flux-1.1-pro" ? (
+          piece.has_8k ? "PNG 8K (Flux 1.1 Pro → Real-ESRGAN 4× → Clarity 2×)" : "PNG 4K (Flux 1.1 Pro + Real-ESRGAN 4×)"
+        ) : `SVG (${piece.canvas_format} viewBox) + PNG`}
+        {piece.has_svg && piece.renderer === "flux-1.1-pro" && " + SVG vector interpretation"}
+      </dd>
+      <dt>Generated</dt>
+      <dd>{piece.created_at || piece.run_id}</dd>
+      <dt>Run ID</dt>
+      <dd class="mono">{piece.run_id}</dd>
+    </dl>
+  </section>
+
+  <p class="license">
+    <strong>License:</strong> CC BY-NC-ND 4.0. Attribution: James Tannahill / art.jamestannahill.com.
+    No commercial use or derivatives without permission.
+  </p>
+</Base>
+
+<style>
+  .crumbs {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .crumbs a { color: var(--color-link); }
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.02em;
+    text-transform: capitalize;
+  }
+  .lede { font-size: 0.95rem; margin: 0 0 1.5rem; }
+  .lede a { color: var(--color-accent); }
+
+  figure.hero {
+    margin: 0 0 1.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #1f1f1f;
+    background: #0a0a0a;
+  }
+  figure.hero img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 2rem;
+  }
+  .btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: #ddd;
+    text-decoration: none;
+    font-size: 0.85rem;
+    background: #111;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn:hover { border-color: #444; color: #fff; text-decoration: none; }
+  .btn.primary {
+    background: linear-gradient(135deg, #2a1a4e, #1a1a3e);
+    border-color: #c4b5fd55;
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .btn.ghost { opacity: 0.6; }
+
+  .rationale {
+    margin: 0 0 2rem;
+    padding: 1rem 1.25rem;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+  }
+  .rationale h2 { font-size: 0.85rem; margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-muted); }
+  .rationale p { color: #ccc; line-height: 1.7; margin: 0; }
+
+  .meta { margin: 0 0 2rem; }
+  .meta h2 {
+    font-size: 0.85rem;
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+    border-bottom: 1px solid #222;
+    padding-bottom: 0.4rem;
+  }
+  .meta dl {
+    display: grid;
+    grid-template-columns: 12rem 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .meta dt { color: var(--color-muted); margin: 0; }
+  .meta dt span[title] { border-bottom: 1px dotted var(--color-muted); cursor: help; }
+  .meta dd { margin: 0; color: #ccc; }
+  .meta dd a { color: var(--color-link); }
+
+  .license {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    padding: 0.75rem 1rem;
+    background: #0d0d0d;
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+    margin: 2rem 0 0;
+  }
+  .license strong { color: #aaa; }
+
+  @media (max-width: 640px) {
+    .meta dl { grid-template-columns: 1fr; gap: 0.1rem 0; }
+    .meta dt { font-size: 0.75rem; margin-top: 0.6rem; }
+  }
+</style>
