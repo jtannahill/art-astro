@@ -7,9 +7,8 @@
     "dev": "astro dev",
     "start": "astro dev",
     "pull-data": "tsx scripts/pull-data.ts",
-    "build": "npm run pull-data && astro build && npm run generate-og && npm run index-search",
-    "build:no-pull": "astro build && npm run generate-og && npm run index-search",
-    "generate-og": "tsx scripts/generate-og.ts",
+    "build": "npm run pull-data && astro build && npm run index-search",
+    "build:no-pull": "astro build && npm run index-search",
     "index-search": "pagefind --site dist --output-subdir _pagefind",
     "preview": "astro preview",
     "astro": "astro"
@@ -21,11 +20,8 @@
     "@astrojs/sitemap": "^3.7.2",
     "@aws-sdk/client-dynamodb": "^3.1043.0",
     "@aws-sdk/util-dynamodb": "^3.996.2",
-    "@fontsource/inter": "^5.2.8",
-    "@resvg/resvg-js": "^2.6.2",
     "astro": "^6.2.2",
     "pagefind": "^1.5.2",
-    "satori": "^0.26.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
