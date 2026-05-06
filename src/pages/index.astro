@@ -1,64 +1,371 @@
 ---
+/**
+ * Homepage. Today's run as the hero, latest palettes below, artist
+ * selector + Generate button calling the production trigger Lambda.
+ *
+ * Infinite scroll from the production homepage is intentionally not
+ * ported — /next/archive/ already serves the full paginated archive.
+ */
+import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
+import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
 
-const buildTime = new Date().toISOString();
+const PROD = "https://art.jamestannahill.com";
+const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
+
+const allWeather = await getCollection("weather");
+const allPalettes = await getCollection("palettes");
+
+// Newest run + its pieces
+const runIds = [...new Set(allWeather.map((w) => w.data.run_id).filter(Boolean))].sort(
+  (a, b) => b.localeCompare(a)
+);
+const latestRun = runIds[0] ?? "";
+const todaysPieces = allWeather
+  .filter((w) => w.data.run_id === latestRun)
+  .map((w) => ({
+    run_id: w.data.run_id,
+    slug: w.data.slug,
+    artist: w.data.artist,
+    rationale: w.data.rationale,
+    temp: w.data.temp,
+    wind_speed: w.data.wind_speed,
+    pressure: w.data.pressure,
+    quality_score: w.data.quality_score,
+    lat: w.data.lat,
+    lng: w.data.lng,
+  }))
+  .sort((a, b) => (b.quality_score ?? 0) - (a.quality_score ?? 0));
+
+// One latest palette per location, then take the freshest 8
+const byLocation = new Map<string, (typeof allPalettes)[number]>();
+for (const p of allPalettes) {
+  const cur = byLocation.get(p.data.location_slug);
+  if (!cur || (p.data.date ?? "").localeCompare(cur.data.date ?? "") > 0) {
+    byLocation.set(p.data.location_slug, p);
+  }
+}
+const latestPalettes = [...byLocation.values()]
+  .sort((a, b) => (b.data.date ?? "").localeCompare(a.data.date ?? ""))
+  .slice(0, 8)
+  .map((p) => ({
+    location_slug: p.data.location_slug,
+    date: p.data.date,
+    colors: p.data.colors,
+    mood: p.data.mood,
+  }));
+
+function fmtArtist(slug: string) {
+  return ARTISTS_BY_KEY[slug]?.display ?? slug.replace(/_/g, " ");
+}
+function fmtSlug(slug: string) {
+  return slug.replace(/-/g, " ");
+}
+function coords(lat?: number, lng?: number) {
+  if (lat == null || lng == null) return "";
+  return `${Math.abs(lat).toFixed(0)}°${lat >= 0 ? "N" : "S"}, ${Math.abs(lng).toFixed(0)}°${lng >= 0 ? "E" : "W"}`;
+}
+function paletteThumb(location_slug: string, date: string) {
+  return `${PROD}/palettes/${date}/${location_slug}/source-thumb.jpg`;
+}
+
+const dropdownArtists = ARTISTS.map((a) => ({
+  key: a.key,
+  display: a.display,
+  link: a.link,
+}));
 ---
 
 <Base
-  title="art.jt / next - Astro preview"
-  description="Astro 6 preview build of art.jamestannahill.com. Production site is unchanged."
+  title="art.jt / next - today's weather art"
+  description="Daily generative art from real atmospheric data. 16 artist lenses, 7 with custom FLUX.1-dev LoRA fine-tunes."
 >
-  <h1>Astro preview is live.</h1>
-  <p class="muted">
-    This is the staging surface for the planned migration of
-    <a href="https://art.jamestannahill.com/">art.jamestannahill.com</a>
-    from Jinja2 + Lambda to Astro 6. Production is untouched; this URL just
-    proves the build &rarr; S3 &rarr; CloudFront pipeline works.
-  </p>
+  <h1>Today's Weather Art</h1>
 
-  <section class="card">
-    <h2>Build info</h2>
-    <dl>
-      <dt>built</dt><dd class="mono">{buildTime}</dd>
-      <dt>base</dt><dd class="mono">{import.meta.env.BASE_URL}</dd>
-      <dt>mode</dt><dd class="mono">{import.meta.env.MODE}</dd>
-      <dt>prod</dt><dd class="mono">{String(import.meta.env.PROD)}</dd>
-    </dl>
-  </section>
+  <div class="artist-bar">
+    <label for="artist-select">Style</label>
+    <select id="artist-select" data-artist-bar>
+      {dropdownArtists.map((a) => (
+        <option value={a.key} data-link={a.link}>{a.display}</option>
+      ))}
+    </select>
+    <button class="gen-btn" data-gen-btn>
+      <span class="spinner"></span>
+      Generate
+    </button>
+    <a id="artist-link" href={dropdownArtists[0].link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
+  </div>
 
-  <section>
-    <h2>Migration order</h2>
-    <ol>
-      <li>Deploy plumbing (this page) <span class="muted">&larr;</span></li>
-      <li>About page (mostly static, validates layout + SEO)</li>
-      <li>Data adapter: DynamoDB &rarr; Astro Content Collections</li>
-      <li>Archive (paginated, biggest UX win)</li>
-      <li>Artist galleries + methodology blocks</li>
-      <li>Single weather pages</li>
-      <li>Homepage</li>
-      <li>Comparison, studies, map, palettes</li>
-    </ol>
-  </section>
+  {todaysPieces.length === 0 ? (
+    <p class="empty">No weather art generated yet today. Check back soon.</p>
+  ) : (
+    <div class="grid">
+      {todaysPieces.map((p) => (
+        <a class="card" href={`/next/weather/${p.run_id}/${p.slug}/`}>
+          <img
+            src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
+            alt={`${p.slug} weather art`}
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="card-body">
+            <h3>{fmtSlug(p.slug)}</h3>
+            <p class="meta">{coords(p.lat, p.lng)}</p>
+            <p class="artist-line">{fmtArtist(p.artist)}</p>
+            <p class="env">
+              {p.temp != null && <span>{p.temp.toFixed(1)}°C</span>}
+              {p.wind_speed != null && <span>{p.wind_speed.toFixed(1)} m/s</span>}
+              {p.pressure != null && <span>{p.pressure.toFixed(0)} hPa</span>}
+            </p>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+
+  <div class="more-cta">
+    <a href="/next/archive/" class="archive-link">Browse the full archive →</a>
+  </div>
+
+  <h2>Latest Palettes</h2>
+  {latestPalettes.length === 0 ? (
+    <p class="empty">No palettes available yet.</p>
+  ) : (
+    <div class="grid">
+      {latestPalettes.map((p) => (
+        <a class="card palette-card" href={`${PROD}/palettes/${p.location_slug}/`} rel="noopener">
+          <img src={paletteThumb(p.location_slug, p.date)} alt={`${p.location_slug} satellite`} loading="lazy" decoding="async" />
+          <div class="card-body">
+            <h3>{fmtSlug(p.location_slug)}</h3>
+            <div class="swatches">
+              {p.colors.map((c) => (
+                <div class="swatch" style={`background:${c}`} title={c}></div>
+              ))}
+            </div>
+            {p.mood && <p class="mood">{p.mood}</p>}
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+
+  <div class="toast" id="toast" data-toast></div>
 </Base>
 
-<style>
-  h1 { font-size: 2.25rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
-  h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--color-fg); }
-  .card {
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 2rem 0;
+<script is:inline define:vars={{ TRIGGER_URL }}>
+  // Artist dropdown → "about this artist" link
+  const sel = document.querySelector("[data-artist-bar]");
+  const link = document.getElementById("artist-link");
+  if (sel && link) {
+    sel.addEventListener("change", () => {
+      const opt = sel.options[sel.selectedIndex];
+      const href = opt.getAttribute("data-link");
+      if (href) link.setAttribute("href", href);
+    });
   }
-  dl {
+
+  // Generate button → production trigger Lambda
+  const btn = document.querySelector("[data-gen-btn]");
+  const toast = document.querySelector("[data-toast]");
+  function flash(msg, ms = 5000) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), ms);
+  }
+  if (btn && sel) {
+    btn.addEventListener("click", () => {
+      btn.classList.add("loading");
+      const artist = sel.value;
+      fetch(`${TRIGGER_URL}?artist=${encodeURIComponent(artist)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.status === "already_running") {
+            flash("Pipeline is already running — check back in a few minutes");
+          } else if (data.status === "cooldown") {
+            flash(data.message ?? "Cooldown active — try again later");
+          } else {
+            flash("Generating new art — refresh in ~5 minutes");
+          }
+        })
+        .catch(() => flash("Error triggering pipeline", 3000))
+        .finally(() => setTimeout(() => btn.classList.remove("loading"), 1200));
+    });
+  }
+</script>
+
+<style>
+  h1 { font-size: 2rem; margin: 0 0 1.25rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.1rem; margin: 3rem 0 1rem; letter-spacing: -0.01em; }
+  h3 { font-size: 0.9rem; margin: 0 0 0.25rem; color: #fff; text-transform: capitalize; }
+  .empty { color: var(--color-muted); padding: 2rem 0; }
+
+  .artist-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #0f0f1a 0%, #141428 100%);
+    border: 1px solid #2a2a3e;
+    border-radius: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .artist-bar label {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .artist-bar select {
+    flex: 1;
+    min-width: 160px;
+    background: transparent;
+    color: #fff;
+    border: none;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0 center;
+  }
+  .artist-bar select option { background: #141428; color: #fff; }
+  .gen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    background: linear-gradient(135deg, #2a1a4e, #1a1a3e);
+    border: 1px solid #c4b5fd33;
+    border-radius: 8px;
+    color: var(--color-accent);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .gen-btn:hover {
+    background: linear-gradient(135deg, #3a2a6e, #2a2a5e);
+    border-color: #c4b5fd66;
+  }
+  .gen-btn.loading { opacity: 0.6; pointer-events: none; }
+  .spinner {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #666;
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .gen-btn.loading .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .artist-link {
+    font-size: 0.75rem;
+    color: #555;
+    transition: color 0.2s;
+  }
+  .artist-link:hover { color: var(--color-link); }
+
+  .grid {
     display: grid;
-    grid-template-columns: 6rem 1fr;
-    gap: 0.4rem 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .card {
+    display: block;
+    background: #111;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    color: inherit;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: #333;
+    text-decoration: none;
+  }
+  .card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #0a0a0a;
+  }
+  .card-body { padding: 0.6rem 0.75rem 0.75rem; }
+  .meta { color: var(--color-accent); font-size: 0.75rem; margin: 0 0 0.3rem; }
+  .artist-line { color: var(--color-muted); font-size: 0.78rem; margin: 0 0 0.4rem; }
+  .env {
+    color: var(--color-muted);
+    font-size: 0.72rem;
     margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+  }
+
+  .swatches {
+    display: flex;
+    height: 16px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0.4rem 0;
+  }
+  .swatch { flex: 1; }
+  .mood {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    margin: 0;
+    line-height: 1.4;
+    font-style: italic;
+  }
+
+  .more-cta {
+    margin: 2rem 0 1rem;
+    text-align: center;
+  }
+  .archive-link {
+    display: inline-block;
+    padding: 0.55rem 1.25rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: var(--color-link);
     font-size: 0.9rem;
   }
-  dt { color: var(--color-muted); margin: 0; }
-  dd { margin: 0; }
-  ol { padding-left: 1.25rem; color: #ccc; }
-  ol li { margin-bottom: 0.3rem; }
+  .archive-link:hover { border-color: #444; text-decoration: none; }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 0.75rem 1.25rem;
+    background: #1a1a2e;
+    border: 1px solid #c4b5fd44;
+    border-radius: 8px;
+    color: #ddd;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    .artist-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+    .artist-bar label { display: none; }
+    .gen-btn { justify-content: center; }
+  }
 </style>
