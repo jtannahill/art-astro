@@ -12,6 +12,7 @@
 import type { GetStaticPaths, Page } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import Thumb from "../../components/Thumb.astro";
 
 interface RunGroup {
   run_id: string;
@@ -147,15 +148,11 @@ function fmtRunDate(run_id: string) {
               data-artist={p.artist}
               data-score={p.quality_score ?? 0}
             >
-              <div class="thumb">
-                <img
-                  src={p.preview_url}
-                  alt={`${p.slug} (${fmtArtist(p.artist)})`}
-                  loading="lazy"
-                  decoding="async"
-                  style={`view-transition-name: art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")};`}
-                />
-              </div>
+              <Thumb
+                base={p.preview_url.replace(/\/preview-2048\.png$/, "")}
+                alt={`${p.slug} (${fmtArtist(p.artist)})`}
+                viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
+              />
               <div class="card-body">
                 <h3>{p.slug.replace(/-/g, " ")}</h3>
                 <p class="meta">{fmtArtist(p.artist)}</p>

@@ -6,6 +6,7 @@
  */
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import Thumb from "../../components/Thumb.astro";
 import { ARTISTS_BY_KEY } from "../../data/artists.ts";
 import { TOTAL_ARTISTS, asWord } from "../../data/counts.ts";
 
@@ -55,7 +56,7 @@ const comparisons = [...cells.values()]
       .map(([artist_key, w]) => ({
         artist_key,
         artist_name: ARTISTS_BY_KEY[artist_key]?.display ?? artist_key.replace(/_/g, " "),
-        img_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
+        thumb_base: `${PROD}/weather/${w.data.run_id}/${w.data.slug}`,
         url: `/weather/${w.data.run_id}/${w.data.slug}/`,
       }));
     return {
@@ -102,7 +103,7 @@ const comparisons = [...cells.values()]
         <div class="row">
           {comp.pieces.map((p) => (
             <a class="cell" href={p.url}>
-              <img src={p.img_url} alt={`${p.artist_name} interpretation`} loading="lazy" decoding="async" />
+              <Thumb base={p.thumb_base} alt={`${p.artist_name} interpretation`} />
               <span class="caption">{p.artist_name}</span>
             </a>
           ))}

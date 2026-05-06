@@ -8,6 +8,7 @@
  */
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
+import Thumb from "../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
 
@@ -144,15 +145,11 @@ const dropdownArtists = ARTISTS.map((a) => ({
     <div class="grid">
       {todaysPieces.map((p) => (
         <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
-          <div class="thumb">
-            <img
-              src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
-              alt={`${p.slug} weather art`}
-              loading="lazy"
-              decoding="async"
-              style={`view-transition-name: art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")};`}
-            />
-          </div>
+          <Thumb
+            base={`${PROD}/weather/${p.run_id}/${p.slug}`}
+            alt={`${p.slug} weather art`}
+            viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
+          />
           <div class="card-body">
             <h3>{fmtSlug(p.slug)}</h3>
             <p class="meta">{coords(p.lat, p.lng)}</p>

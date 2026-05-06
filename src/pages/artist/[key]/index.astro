@@ -3,6 +3,7 @@ import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../../layouts/Base.astro";
 import Methodology from "../../../components/Methodology.astro";
+import Thumb from "../../../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY, LORA_METHODOLOGY } from "../../../data/artists.ts";
 
 export const getStaticPaths: GetStaticPaths = () =>
@@ -69,15 +70,11 @@ function fmtSlug(slug: string) {
       <div class="grid">
         {pieces.map((p) => (
           <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
-            <div class="thumb">
-              <img
-                src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
-                alt={`${p.slug} - ${artist.display}`}
-                loading="lazy"
-                decoding="async"
-                style={`view-transition-name: art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")};`}
-              />
-            </div>
+            <Thumb
+              base={`${PROD}/weather/${p.run_id}/${p.slug}`}
+              alt={`${p.slug} - ${artist.display}`}
+              viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
+            />
             <div class="card-body">
               <h3>{fmtSlug(p.slug)}</h3>
               <p class="env">
