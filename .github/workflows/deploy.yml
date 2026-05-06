@@ -32,6 +32,18 @@ jobs:
       - name: build
         run: npm run build
 
+      - name: debug secret shape
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          echo "akid_len=${#AWS_ACCESS_KEY_ID}  (expected 20)"
+          echo "akid_prefix=${AWS_ACCESS_KEY_ID:0:4}"
+          echo "sk_len=${#AWS_SECRET_ACCESS_KEY}  (expected 40)"
+          # Bash uses backslash-escape in printf; show raw byte count via wc
+          printf '%s' "$AWS_ACCESS_KEY_ID" | wc -c | xargs -I{} echo "akid_bytes={}"
+          printf '%s' "$AWS_SECRET_ACCESS_KEY" | wc -c | xargs -I{} echo "sk_bytes={}"
+
       - name: deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
