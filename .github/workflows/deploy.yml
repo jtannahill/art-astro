@@ -1,4 +1,4 @@
-name: deploy preview
+name: deploy
 
 on:
   push:
@@ -12,9 +12,9 @@ permissions:
 env:
   AWS_REGION: us-east-1
   S3_BUCKET: art-generator-216890068001
-  S3_PREFIX: site/next
+  S3_PREFIX: site
   CLOUDFRONT_DISTRIBUTION_ID: E1ZBBUI25FIV7
-  INVALIDATION_PATHS: /next/*
+  INVALIDATION_PATHS: /*
 
 jobs:
   build-and-deploy:

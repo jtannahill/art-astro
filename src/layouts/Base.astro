@@ -22,22 +22,28 @@ const canonical = canonicalPath
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
-    <meta name="robots" content="noindex, nofollow" />
     <slot name="head" />
   </head>
   <body>
     <header class="hdr">
       <a href={import.meta.env.BASE_URL}>
-        <span class="hdr-mark">art.jt</span><span class="hdr-slash"> / next</span>
+        <span class="hdr-mark">art.jt</span>
       </a>
-      <span class="hdr-tag">Astro Preview</span>
+      <nav class="top-nav">
+        <a href="/archive/">Archive</a>
+        <a href="/artist/">Artists</a>
+        <a href="/palettes/">Palettes</a>
+        <a href="/map/">Map</a>
+        <a href="/about/">About</a>
+      </nav>
     </header>
     <main>
       <slot />
     </main>
     <footer class="ftr">
-      Astro {Astro.generator.split(" ").pop()} preview build · production lives at
-      <a href="https://art.jamestannahill.com/">art.jamestannahill.com</a>
+      Generative weather art by James Tannahill ·
+      <a href="/about/">about</a> ·
+      <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener">CC BY-NC-ND 4.0</a>
     </footer>
 
     <style>
@@ -49,13 +55,15 @@ const canonical = canonicalPath
         border-bottom: 1px solid var(--color-border);
       }
       .hdr a { color: var(--color-fg); font-family: var(--font-mono); font-size: 0.9rem; }
-      .hdr-slash { color: var(--color-muted); }
-      .hdr-tag {
-        font-size: 0.7rem;
+      .top-nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+      .top-nav a {
+        color: var(--color-muted);
+        font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: var(--color-muted);
+        text-decoration: none;
       }
+      .top-nav a:hover { color: var(--color-link); }
       main {
         max-width: 720px;
         margin: 0 auto;

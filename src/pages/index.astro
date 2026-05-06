@@ -4,7 +4,7 @@
  * selector + Generate button calling the production trigger Lambda.
  *
  * Infinite scroll from the production homepage is intentionally not
- * ported — /next/archive/ already serves the full paginated archive.
+ * ported — /archive/ already serves the full paginated archive.
  */
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
@@ -77,7 +77,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
 ---
 
 <Base
-  title="art.jt / next - today's weather art"
+  title="art.jt — today's weather art"
   description="Daily generative art from real atmospheric data. 16 artist lenses, 7 with custom FLUX.1-dev LoRA fine-tunes."
 >
   <h1>Today's Weather Art</h1>
@@ -101,7 +101,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
   ) : (
     <div class="grid">
       {todaysPieces.map((p) => (
-        <a class="card" href={`/next/weather/${p.run_id}/${p.slug}/`}>
+        <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
           <img
             src={`${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`}
             alt={`${p.slug} weather art`}
@@ -124,7 +124,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
   )}
 
   <div class="more-cta">
-    <a href="/next/archive/" class="archive-link">Browse the full archive →</a>
+    <a href="/archive/" class="archive-link">Browse the full archive →</a>
   </div>
 
   <h2>Latest Palettes</h2>

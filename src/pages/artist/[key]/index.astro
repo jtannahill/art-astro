@@ -10,7 +10,7 @@ export const getStaticPaths: GetStaticPaths = () =>
 
 const { key } = Astro.params;
 if (!key || !(key in ARTISTS_BY_KEY)) {
-  return Astro.rewrite("/next/404/");
+  return Astro.rewrite("/404/");
 }
 const artist = ARTISTS_BY_KEY[key];
 const methodology = LORA_METHODOLOGY[key];
@@ -37,7 +37,7 @@ function fmtSlug(slug: string) {
 ---
 
 <Base
-  title={`${artist.display} - art.jt / next`}
+  title={`${artist.display}- art.jt`}
   description={`Generative weather art through the lens of ${artist.display}. ${pieces.length} pieces in the archive.`}
   canonicalPath={`/artist/${key}/`}
 >

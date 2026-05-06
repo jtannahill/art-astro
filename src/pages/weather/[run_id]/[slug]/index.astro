@@ -117,7 +117,7 @@ const TIPS = {
 };
 ---
 
-<Base title={`${title} - ${piece.date} - art.jt / next`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`}>
+<Base title={`${title} - ${piece.date}- art.jt`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`}>
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(visualArtwork)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />
@@ -130,9 +130,9 @@ const TIPS = {
   </Fragment>
 
   <nav class="crumbs">
-    <a href="/next/">Home</a>
+    <a href="/">Home</a>
     <span>/</span>
-    <a href="/next/archive/">Archive</a>
+    <a href="/archive/">Archive</a>
     <span>/</span>
     <span class="muted">{piece.run_id}</span>
     <span>/</span>
@@ -142,7 +142,7 @@ const TIPS = {
   <h1>{title}</h1>
   <p class="lede muted">
     {coords(piece.lat, piece.lng)} ·
-    <a href={`/next/artist/${piece.artist}/`}>{artistName}</a> ·
+    <a href={`/artist/${piece.artist}/`}>{artistName}</a> ·
     {piece.date}
   </p>
 
@@ -236,7 +236,7 @@ const TIPS = {
       <dt>Model</dt>
       <dd>{piece.renderer === "flux-1.1-pro" ? "Flux 1.1 Pro (Black Forest Labs)" : "Claude Sonnet 4 via Amazon Bedrock"}</dd>
       <dt>Artist Inspiration</dt>
-      <dd><a href={`/next/artist/${piece.artist}/`}>{artistName}</a></dd>
+      <dd><a href={`/artist/${piece.artist}/`}>{artistName}</a></dd>
       <dt>Weather Source</dt>
       <dd>Open-Meteo API (GFS model)</dd>
       <dt>Format</dt>

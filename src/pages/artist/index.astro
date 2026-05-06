@@ -31,7 +31,7 @@ const cards = ARTISTS.map((a) => ({
 ---
 
 <Base
-  title="Artists - art.jt / next"
+  title="Artists- art.jt"
   description="16 artistic lenses interpreting the same atmospheric data. 7 with custom FLUX.1-dev LoRA fine-tunes."
 >
   <h1>Artists</h1>
@@ -43,7 +43,7 @@ const cards = ARTISTS.map((a) => ({
 
   <div class="grid">
     {cards.map((a) => (
-      <a class="card" href={`/next/artist/${a.key}/`}>
+      <a class="card" href={`/artist/${a.key}/`}>
         <div class="mosaic">
           {a.thumbs.length > 0 ? (
             a.thumbs.map((t) => (

@@ -35,7 +35,7 @@ interface PieceMeta {
 export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
   // Pre-render in production CDN URLs so the staging archive does not
   // need its own image pipeline yet. Cutover swaps these to optimized
-  // /next/-served variants once we add an image script.
+  // /-served variants once we add an image script.
   const PROD = "https://art.jamestannahill.com";
   const all = await getCollection("weather");
   const groups = new Map<string, typeof all>();
@@ -94,7 +94,7 @@ function fmtRunDate(run_id: string) {
 ---
 
 <Base
-  title={`Archive page ${page.currentPage} - art.jt / next`}
+  title={`Archive page ${page.currentPage}- art.jt`}
   description={`Browse ${totalRuns} weather-driven generations across the full archive. Page ${page.currentPage} of ${page.lastPage}.`}
 >
   <h1>Archive</h1>

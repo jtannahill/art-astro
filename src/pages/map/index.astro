@@ -42,7 +42,7 @@ const weatherMarkers: MarkerW[] = allWeather
     lng: w.data.lng!,
     title: w.data.slug.replace(/-/g, " "),
     artist: w.data.artist,
-    url: `/next/weather/${w.data.run_id}/${w.data.slug}/`,
+    url: `/weather/${w.data.run_id}/${w.data.slug}/`,
     img: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
   }));
 
@@ -60,13 +60,13 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
     lat: p.data.lat!,
     lng: p.data.lng!,
     title: p.data.location_slug.replace(/-/g, " "),
-    url: `/next/palettes/${p.data.location_slug}/`,
+    url: `/palettes/${p.data.location_slug}/`,
     img: `${PROD}/palettes/${p.data.date}/${p.data.location_slug}/source-thumb.jpg`,
   }));
 ---
 
 <Base
-  title="World Map - art.jt / next"
+  title="World Map- art.jt"
   description="Every artwork and palette plotted on a dark globe."
 >
   <h1>World Map</h1>

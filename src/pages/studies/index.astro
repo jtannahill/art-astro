@@ -10,7 +10,7 @@ const studies: { study_id: string; title: string; description?: string; days?: n
 ---
 
 <Base
-  title="Studies - art.jt / next"
+  title="Studies- art.jt"
   description="Multi-day weather event studies — tracking atmospheric phenomena across days and geographies through generative art."
 >
   <h1>Studies</h1>
@@ -29,7 +29,7 @@ const studies: { study_id: string; title: string; description?: string; days?: n
   ) : (
     <div class="grid">
       {studies.map((s) => (
-        <a class="card" href={`/next/studies/${s.study_id}/`}>
+        <a class="card" href={`/studies/${s.study_id}/`}>
           <div class="card-body">
             <h2>{s.title}</h2>
             {s.description && <p class="desc">{s.description}</p>}

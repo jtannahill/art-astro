@@ -2,15 +2,14 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 
-// Preview deploys land at art.jamestannahill.com/next/* via the existing
-// CloudFront distro (origin path /site/, S3 bucket art-generator-216890068001).
-// Once we cut over, drop `base` and `site` becomes the apex.
+// art.jamestannahill.com is now served entirely from this Astro build.
+// CloudFront distro E1ZBBUI25FIV7 with origin path /site/ — we publish
+// to s3://art-generator-216890068001/site/.
 //
 // Note: Tailwind 4 + Astro 6 (rolldown) don't yet ship a compatible vite
-// plugin. We'll add it back at the first real page migration.
+// plugin. Will add it back when the upstream incompat is resolved.
 export default defineConfig({
   site: 'https://art.jamestannahill.com',
-  base: '/next',
   trailingSlash: 'always',
   build: {
     format: 'directory',

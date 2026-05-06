@@ -55,7 +55,7 @@ const comparisons = [...cells.values()]
         artist_key,
         artist_name: ARTISTS_BY_KEY[artist_key]?.display ?? artist_key.replace(/_/g, " "),
         img_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
-        url: `/next/weather/${w.data.run_id}/${w.data.slug}/`,
+        url: `/weather/${w.data.run_id}/${w.data.slug}/`,
       }));
     return {
       location: fmtSlug(anchor.data.slug),
@@ -73,7 +73,7 @@ const comparisons = [...cells.values()]
 ---
 
 <Base
-  title="Style Comparison - art.jt / next"
+  title="Style Comparison- art.jt"
   description="See how 16 different artists interpret the same atmospheric conditions."
 >
   <h1>Style Comparison</h1>
