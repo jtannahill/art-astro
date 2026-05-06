@@ -1,9 +1,22 @@
 ---
 import Base from "../layouts/Base.astro";
 import { FAQ } from "../data/faq.ts";
+import {
+  TOTAL_ARTISTS,
+  LORA_ARTIST_COUNT,
+  SCAN_POINTS,
+  LATITUDE_BANDS,
+  TOP_LOCATIONS_PER_DAY,
+  MIN_LAT_LNG_SEPARATION_DEG,
+  SATELLITE_ALTITUDE_KM,
+  CANVAS_FORMAT_COUNT,
+  EDITION_SIZE,
+  PRICE_MAX_MULTIPLIER,
+  SCORE_WEIGHTS,
+  asWord,
+} from "../data/counts.ts";
 
-const description =
-  "How generative weather art is made - real atmospheric data, 54 global scan points, AI interpretation through 16 artist lenses (7 with custom FLUX.1-dev LoRA fine-tunes), natural scarcity from unrepeatable weather events. By James Tannahill.";
+const description = `How generative weather art is made - real atmospheric data, ${SCAN_POINTS} global scan points, AI interpretation through ${TOTAL_ARTISTS} artist lenses (${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes), natural scarcity from unrepeatable weather events. By James Tannahill.`;
 
 // Strip HTML for FAQ schema text — search engines accept inline HTML in
 // answers but stripping keeps the structured data tidy and the visible
@@ -79,18 +92,18 @@ const faqSchema = {
   <h2 id="work">The Work</h2>
 
   <p>
-    Every day, fifty-four points across the planet are sampled for what the
-    atmosphere is actually doing &mdash; not what it looks like on a forecast,
-    but its raw physical state. Pressure gradients steep enough to bend trees.
-    Winds crossing open water with nothing to slow them down. Temperature
-    anomalies where the air is ten degrees warmer or colder than it should
-    be. The ten most extreme conditions become source material for original
-    artwork.
+    Every day, {asWord(SCAN_POINTS)} points across the planet are sampled for
+    what the atmosphere is actually doing &mdash; not what it looks like on a
+    forecast, but its raw physical state. Pressure gradients steep enough to
+    bend trees. Winds crossing open water with nothing to slow them down.
+    Temperature anomalies where the air is ten degrees warmer or colder than
+    it should be. The {asWord(TOP_LOCATIONS_PER_DAY)} most extreme conditions
+    become source material for original artwork.
   </p>
 
   <p>
-    The data passes through the aesthetic lens of sixteen artists who
-    understood that abstraction is not the absence of meaning but its
+    The data passes through the aesthetic lens of {asWord(TOTAL_ARTISTS)} artists
+    who understood that abstraction is not the absence of meaning but its
     distillation. Sam Francis knew that empty space is as charged as color.
     Rothko proved that two rectangles can hold grief. Frankenthaler showed
     that letting paint find its own path is an act of trust. Hilma af Klint
@@ -121,20 +134,21 @@ const faqSchema = {
     humidity. The highest-scoring conditions are sent to a generative model
     that interprets the atmospheric data as original digital artwork. There
     are three rendering paths: most artists go through Flux 1.1 Pro from a
-    descriptive text prompt; seven artists (Lesley Tannahill, Sam Francis,
-    Hilma af Klint, Joan Mitchell, Willem de Kooning, Helen Frankenthaler,
-    Gerhard Richter) route through custom FLUX.1-dev LoRA fine-tunes trained
-    on their own canvas reproductions; and a parallel Claude SVG renderer
-    produces a vector version of every piece. Every piece is rendered in
-    seven possible canvas formats, from square to panoramic, chosen by the
-    conditions themselves. Everything is archived permanently.
+    descriptive text prompt; {asWord(LORA_ARTIST_COUNT)} artists (Lesley
+    Tannahill, Sam Francis, Hilma af Klint, Joan Mitchell, Willem de Kooning,
+    Helen Frankenthaler, Gerhard Richter) route through custom FLUX.1-dev LoRA
+    fine-tunes trained on their own canvas reproductions; and a parallel
+    Claude SVG renderer produces a vector version of every piece. Every piece
+    is rendered in {asWord(CANVAS_FORMAT_COUNT)} possible canvas formats, from
+    square to panoramic, chosen by the conditions themselves. Everything is
+    archived permanently.
   </p>
 
   <p>
     A parallel system extracts color palettes from Copernicus Sentinel-2
     satellite imagery &mdash; the actual colors of Earth as seen from orbit.
     Deserts, glaciers, river deltas, volcanic islands. A seasonal record of
-    what the planet looks like from 786 kilometers up.
+    what the planet looks like from {SATELLITE_ALTITUDE_KM} kilometers up.
   </p>
 
   <h2 id="method">How the Art Is Made</h2>
@@ -174,12 +188,12 @@ const faqSchema = {
     hyperparameters, and provenance.
   </p>
 
-  <h3>Weather Data: 54 Points, 6 Variables</h3>
+  <h3>Weather Data: {SCAN_POINTS} Points, 6 Variables</h3>
 
   <p>
-    Every run samples 54 points across 10 latitude bands, from 70&deg;N
-    (Arctic) to 60&deg;S (Subantarctic). At each point, six atmospheric
-    variables are measured at the current hour:
+    Every run samples {SCAN_POINTS} points across {LATITUDE_BANDS} latitude
+    bands, from 70&deg;N (Arctic) to 60&deg;S (Subantarctic). At each point,
+    six atmospheric variables are measured at the current hour:
   </p>
 
   <div class="vars-grid">
@@ -199,10 +213,12 @@ const faqSchema = {
 
   <p>
     The composite visual interest score weights these: pressure anomaly
-    (30%), wind (25%), temperature deviation (20%), precipitation (15%),
-    humidity (10%). The top 10 scorers &mdash; with at least 15&deg; of
-    geographic separation to ensure diversity &mdash; become the day's
-    artwork subjects.
+    ({SCORE_WEIGHTS.pressure_anomaly}%), wind ({SCORE_WEIGHTS.wind}%),
+    temperature deviation ({SCORE_WEIGHTS.temperature_deviation}%),
+    precipitation ({SCORE_WEIGHTS.precipitation}%), humidity
+    ({SCORE_WEIGHTS.humidity}%). The top {TOP_LOCATIONS_PER_DAY} scorers
+    &mdash; with at least {MIN_LAT_LNG_SEPARATION_DEG}&deg; of geographic
+    separation to ensure diversity &mdash; become the day's artwork subjects.
   </p>
 
   <h3>Why GFS?</h3>
@@ -220,7 +236,7 @@ const faqSchema = {
     rate-limited), ICON (better European resolution), or HRRR (3km US-only)
     because it offers the best tradeoff for this project: free global
     coverage at resolution sufficient for macro-scale weather drama, with
-    reliable hourly data across all 54 scan points simultaneously. The art
+    reliable hourly data across all {SCAN_POINTS} scan points simultaneously. The art
     interprets continental-scale atmospheric patterns &mdash; pressure
     systems spanning oceans, temperature fronts crossing mountain ranges
     &mdash; where GFS excels. The <code>gfs_seamless</code> variant blends
@@ -242,7 +258,7 @@ const faqSchema = {
 
   <p>
     Every evening at 20:00 UTC, a separate system scans the 24-hour GFS
-    forecast for all 54 scan points, scoring each for predicted visual
+    forecast for all {SCAN_POINTS} scan points, scoring each for predicted visual
     drama using the same composite formula. This produces a ranked list of
     tomorrow's most promising atmospheric conditions &mdash; a weather drama
     forecast that anticipates where the most striking art will come from
@@ -257,7 +273,7 @@ const faqSchema = {
     commands a premium), the rarity of the weather conditions that produced
     it (extreme atmospheric events are scarcer), and scarcity (as editions
     sell, remaining prints increase in value). The base price can increase
-    up to 2&times; for exceptional pieces born from rare weather.
+    up to {PRICE_MAX_MULTIPLIER}&times; for exceptional pieces born from rare weather.
   </p>
 
   <h3>Natural Scarcity</h3>

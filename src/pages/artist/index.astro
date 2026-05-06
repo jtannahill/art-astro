@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { ARTISTS, hasLora } from "../../data/artists.ts";
+import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../../data/counts.ts";
 
 const all = await getCollection("weather");
 
@@ -31,14 +32,14 @@ const cards = ARTISTS.map((a) => ({
 ---
 
 <Base
-  title="Artists- art.jt"
-  description="16 artistic lenses interpreting the same atmospheric data. 7 with custom FLUX.1-dev LoRA fine-tunes."
+  title="Artists - art.jt"
+  description={`${TOTAL_ARTISTS} artistic lenses interpreting the same atmospheric data. ${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes.`}
 >
   <h1>Artists</h1>
   <p class="muted">
-    16 artistic lenses interpret the same weather data into radically different
-    compositions. Asterisked artists have a custom FLUX.1-dev LoRA fine-tune
-    trained on their own canvas reproductions.
+    {TOTAL_ARTISTS} artistic lenses interpret the same weather data into
+    radically different compositions. Asterisked artists have a custom
+    FLUX.1-dev LoRA fine-tune trained on their own canvas reproductions.
   </p>
 
   <div class="grid">

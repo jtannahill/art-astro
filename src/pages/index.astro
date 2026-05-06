@@ -9,6 +9,7 @@
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
+import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
@@ -78,7 +79,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
 
 <Base
   title="art.jt — today's weather art"
-  description="Daily generative art from real atmospheric data. 16 artist lenses, 7 with custom FLUX.1-dev LoRA fine-tunes."
+  description={`Daily generative art from real atmospheric data. ${TOTAL_ARTISTS} artist lenses, ${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes.`}
 >
   <h1>Today's Weather Art</h1>
 
@@ -96,6 +97,47 @@ const dropdownArtists = ARTISTS.map((a) => ({
     <a id="artist-link" href={dropdownArtists[0].link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
   </div>
 
+  {/* Plain-English weather → art map. Same data the model gets, in
+       human terms — so a visitor immediately understands why a piece
+       looks the way it does. Detailed grid lives in /about/. */}
+  <section class="how">
+    <h2>What the weather does</h2>
+    <p class="how-lede">Every variable nudges the image in a specific direction.</p>
+    <ol class="how-grid">
+      <li>
+        <span class="ix">Pressure</span>
+        <span class="ax">→ density &amp; weight</span>
+        <span class="copy">Deep lows compress; high pressure opens the canvas.</span>
+      </li>
+      <li>
+        <span class="ix">Wind</span>
+        <span class="ax">→ kinetic energy</span>
+        <span class="copy">Strong winds drive sweeping strokes; calm air yields stillness.</span>
+      </li>
+      <li>
+        <span class="ix">Temperature</span>
+        <span class="ax">→ color palette</span>
+        <span class="copy">Heat saturates; cold sharpens contrasts.</span>
+      </li>
+      <li>
+        <span class="ix">Humidity</span>
+        <span class="ax">→ softness</span>
+        <span class="copy">Moist air blends edges; dry air keeps them crisp.</span>
+      </li>
+      <li>
+        <span class="ix">Precipitation</span>
+        <span class="ax">→ texture</span>
+        <span class="copy">Rain &amp; snow add layered, dripping density.</span>
+      </li>
+      <li>
+        <span class="ix">Anomaly</span>
+        <span class="ax">→ drama</span>
+        <span class="copy">How far from normal &mdash; the louder the piece.</span>
+      </li>
+    </ol>
+  </section>
+
+  <h2 class="todays-h">Today's run</h2>
   {todaysPieces.length === 0 ? (
     <p class="empty">No weather art generated yet today. Check back soon.</p>
   ) : (
@@ -203,6 +245,35 @@ const dropdownArtists = ARTISTS.map((a) => ({
   h1 { font-size: 2rem; margin: 0 0 1.25rem; letter-spacing: -0.02em; }
   h2 { font-size: 1.1rem; margin: 3rem 0 1rem; letter-spacing: -0.01em; }
   h3 { font-size: 0.9rem; margin: 0 0 0.25rem; color: #fff; text-transform: capitalize; }
+
+  .how {
+    margin: 2rem 0;
+    padding: 1.25rem 1.4rem;
+    background: linear-gradient(135deg, #0c0c1a 0%, #11112a 100%);
+    border: 1px solid #1f1f33;
+    border-radius: 12px;
+  }
+  .how h2 { margin: 0 0 0.25rem; font-size: 0.85rem; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.15em; }
+  .how-lede { color: #ccc; font-size: 0.95rem; margin: 0 0 1rem; }
+  .how-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.6rem 1rem;
+  }
+  .how-grid li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid #1f1f33;
+  }
+  .how-grid .ix { color: #fff; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em; }
+  .how-grid .ax { color: var(--color-accent); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  .how-grid .copy { color: var(--color-muted); font-size: 0.8rem; line-height: 1.5; margin-top: 0.15rem; }
+  .todays-h { margin-top: 3rem; }
   .empty { color: var(--color-muted); padding: 2rem 0; }
 
   .artist-bar {

@@ -5,6 +5,7 @@
  */
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import { SATELLITE_ALTITUDE_KM } from "../../data/counts.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const all = await getCollection("palettes");
@@ -33,15 +34,15 @@ function fmtSlug(s: string) {
 
 <Base
   title="Satellite Color Palettes- art.jt"
-  description="Color palettes extracted from Copernicus Sentinel-2 satellite imagery — Earth's real colors as seen from 786 km above."
+  description={`Color palettes extracted from Copernicus Sentinel-2 satellite imagery — Earth's real colors as seen from ${SATELLITE_ALTITUDE_KM} km above.`}
 >
   <h1>Satellite Color Palettes</h1>
   <p class="lede muted">
     Every day, the system pulls true-color imagery from
     <a href="https://dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Sentinel-2</a>
-    — the European Space Agency's Earth-observation constellation, 786&nbsp;km above the surface — and
-    extracts dominant colors via median-cut quantization. {palettes.length} locations,
-    {all.length} samples archived.
+    — the European Space Agency's Earth-observation constellation, {SATELLITE_ALTITUDE_KM}&nbsp;km
+    above the surface — and extracts dominant colors via median-cut quantization.
+    {palettes.length} locations, {all.length} samples archived.
   </p>
 
   {palettes.length === 0 ? (

@@ -7,6 +7,7 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { ARTISTS_BY_KEY } from "../../data/artists.ts";
+import { TOTAL_ARTISTS, asWord } from "../../data/counts.ts";
 
 const PROD = "https://art.jamestannahill.com";
 
@@ -73,14 +74,14 @@ const comparisons = [...cells.values()]
 ---
 
 <Base
-  title="Style Comparison- art.jt"
-  description="See how 16 different artists interpret the same atmospheric conditions."
+  title="Style Comparison - art.jt"
+  description={`See how ${TOTAL_ARTISTS} different artists interpret the same atmospheric conditions.`}
 >
   <h1>Style Comparison</h1>
   <p class="lede muted">
-    Same atmospheric conditions, sixteen artistic lenses. Each row shows one
-    location's weather data interpreted through every artist that has rendered it.
-    The data is identical. The vision is not.
+    Same atmospheric conditions, {asWord(TOTAL_ARTISTS)} artistic lenses. Each
+    row shows one location's weather data interpreted through every artist that
+    has rendered it. The data is identical. The vision is not.
   </p>
 
   {comparisons.length === 0 ? (

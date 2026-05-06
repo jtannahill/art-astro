@@ -17,11 +17,16 @@ import Base from "../layouts/Base.astro";
   <link href="/_pagefind/pagefind-ui.css" rel="stylesheet" />
   <script src="/_pagefind/pagefind-ui.js" is:inline></script>
   <script is:inline>
-    window.addEventListener("DOMContentLoaded", () => {
-      // Wait for Pagefind UI script to load (CDN path is /_pagefind/...).
-      function init() {
+    // Mount Pagefind UI on initial page load AND on every Astro
+    // view-transition swap — astro:page-load fires for both, including
+    // when ClientRouter navigates here from another page.
+    function mountSearch() {
+      const el = document.getElementById("search");
+      if (!el || el.dataset.pfReady === "1") return;
+      let tries = 0;
+      (function waitForUI() {
         if (typeof PagefindUI === "undefined") {
-          setTimeout(init, 80);
+          if (tries++ < 80) setTimeout(waitForUI, 60);
           return;
         }
         new PagefindUI({
@@ -32,9 +37,13 @@ import Base from "../layouts/Base.astro";
           autofocus: true,
           translations: { placeholder: "Search rationale, artist, location..." },
         });
-      }
-      init();
-    });
+        el.dataset.pfReady = "1";
+      })();
+    }
+    document.addEventListener("astro:page-load", mountSearch);
+    // First-paint case: astro:page-load may have already fired before
+    // this script ran, so kick once now too.
+    mountSearch();
   </script>
 </Base>
 

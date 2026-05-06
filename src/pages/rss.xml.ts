@@ -1,6 +1,7 @@
 import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
 import { ARTISTS_BY_KEY } from "../data/artists.ts";
+import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
 
 export async function GET(context: { site: URL | undefined }) {
   const site = context.site?.toString() ?? "https://art.jamestannahill.com/";
@@ -13,8 +14,7 @@ export async function GET(context: { site: URL | undefined }) {
 
   return rss({
     title: "art.jt — generative weather art",
-    description:
-      "Daily generative artwork from real atmospheric data, interpreted through 16 artist lenses (7 with custom FLUX.1-dev LoRA fine-tunes).",
+    description: `Daily generative artwork from real atmospheric data, interpreted through ${TOTAL_ARTISTS} artist lenses (${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes).`,
     site,
     customData:
       "<language>en-us</language>" +
