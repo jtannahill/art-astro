@@ -1,5 +1,11 @@
 # art-astro
 
+![Status](https://img.shields.io/badge/status-staging-yellow)
+![Astro](https://img.shields.io/badge/Astro-BC52EE?logo=astro&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white)
+![Last Commit](https://img.shields.io/github/last-commit/jtannahill/art-astro)
+
 Source of [art.jamestannahill.com](https://art.jamestannahill.com).
 Astro 6, fully static, deployed on every push to `main`.
 
