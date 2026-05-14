@@ -11,25 +11,25 @@ Astro 6, fully static, deployed on every push to `main`.
 
 ## Stack
 
-- **Astro 6.2** — static output, file-based routing, View Transitions
+- **Astro 6.2**: static output, file-based routing, View Transitions
 - **TypeScript** + **Astro Content Collections** with Zod schemas
 - **DynamoDB → JSON snapshots** at build time (no DB calls at runtime)
 - **Pagefind** for local-first search across every piece's rationale
 - **Mapbox GL** for the world-map page
 - **`@astrojs/rss`** for `/rss.xml`
-- **CI** — GitHub Actions: type-check → build → S3 sync → CloudFront invalidate
+- **CI**: GitHub Actions: type-check → build → S3 sync → CloudFront invalidate
 
 ## How it deploys
 
 Every push to `main` runs `.github/workflows/deploy.yml`:
 
-1. `npm run pull-data` — scan DynamoDB `art-generator` table, write
+1. `npm run pull-data`: scan DynamoDB `art-generator` table, write
    `src/data/generated/{weather,palettes}.json` (gitignored)
-2. `astro check` — TypeScript validation across `.astro` files
-3. `astro build` — produce `dist/` (~915 pages)
-4. `pagefind --site dist` — build local search index
+2. `astro check`: TypeScript validation across `.astro` files
+3. `astro build`: produce `dist/` (~915 pages)
+4. `pagefind --site dist`: build local search index
 5. `aws s3 sync ./dist/ s3://art-generator-216890068001/site/`
-   (no `--delete` — preserves pipeline-written PNG/WebP/SVG assets)
+   (no `--delete`: preserves pipeline-written PNG/WebP/SVG assets)
 6. `aws cloudfront create-invalidation --paths "/*"`
 
 End-to-end: ~45 s on a clean runner.
@@ -104,7 +104,7 @@ src/
 
 ## Related repos / infrastructure
 
-- [`art-generator`](https://github.com/jtannahill/art-generator) — upstream
+- [`art-generator`](https://github.com/jtannahill/art-generator): upstream
   Lambdas + DynamoDB pipeline. Daily Step Function runs:
   `art-weather-ingest` → `art-weather-render` × 10 →
   `art-satellite-ingest` → `art-palette-extract` →
