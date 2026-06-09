@@ -102,12 +102,25 @@ function fmtRunDate(run_id: string) {
   const mm = tsPart.slice(2, 4);
   return `${datePart} ${hh}:${mm} UTC`;
 }
+
+const collectionLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: `Weather Art Archive — page ${page.currentPage}`,
+  url: `https://art.jamestannahill.com/archive/${page.currentPage > 1 ? page.currentPage + "/" : ""}`,
+  description: `Browse ${totalRuns} weather-driven generations across the full archive.`,
+  isPartOf: { "@type": "WebSite", name: "art.jt", url: "https://art.jamestannahill.com/" },
+};
 ---
 
 <Base
-  title={`Archive page ${page.currentPage}- art.jt`}
+  title={`Archive page ${page.currentPage} — art.jt`}
   description={`Browse ${totalRuns} weather-driven generations across the full archive. Page ${page.currentPage} of ${page.lastPage}.`}
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(collectionLd)} />
+  </Fragment>
+
   <h1>Archive</h1>
   <p class="muted">
     Every weather-driven generation, newest first. {totalRuns} runs · {totalPieces} pieces on this page · page {page.currentPage} of {page.lastPage}.

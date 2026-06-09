@@ -30,12 +30,25 @@ const palettes = [...latestPerLocation.values()]
 function fmtSlug(s: string) {
   return s.replace(/-/g, " ");
 }
+
+const collectionLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Satellite Color Palettes",
+  url: "https://art.jamestannahill.com/palettes/",
+  description: `Color palettes extracted from Copernicus Sentinel-2 satellite imagery. ${palettes.length} locations, ${all.length} samples archived.`,
+  isPartOf: { "@type": "WebSite", name: "art.jt", url: "https://art.jamestannahill.com/" },
+};
 ---
 
 <Base
-  title="Satellite Color Palettes- art.jt"
+  title="Satellite Color Palettes — art.jt"
   description={`Color palettes extracted from Copernicus Sentinel-2 satellite imagery - Earth's real colors as seen from ${SATELLITE_ALTITUDE_KM} km above.`}
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(collectionLd)} />
+  </Fragment>
+
   <h1>Satellite Color Palettes</h1>
   <p class="lede muted">
     Every day, the system pulls true-color imagery from
@@ -57,6 +70,8 @@ function fmtSlug(s: string) {
               alt={`${p.location_slug} satellite imagery`}
               loading="lazy"
               decoding="async"
+              width="512"
+              height="512"
             />
           </div>
           <div class="card-body">

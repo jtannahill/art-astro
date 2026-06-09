@@ -13,7 +13,7 @@ export async function GET(context: { site: URL | undefined }) {
     .slice(0, 50);
 
   return rss({
-    title: "art.jt - generative weather art",
+    title: "art.jt — generative weather art",
     description: `Daily generative artwork from real atmospheric data, interpreted through ${TOTAL_ARTISTS} artist lenses (${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes).`,
     site,
     customData:
@@ -29,14 +29,17 @@ export async function GET(context: { site: URL | undefined }) {
       const previewUrl = `https://art.jamestannahill.com/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`;
       const rationale =
         w.data.rationale || `Generative weather art at ${title} on ${w.data.date}.`;
-      // Inline <img> at the top of the description renders the artwork
-      // in readers that strip <enclosure> (most web-based feed previews).
-      const richDescription = `<p><img src="${previewUrl}" alt="${title} - ${artistName}" style="max-width:100%;height:auto;border-radius:6px;" /></p><p>${rationale}</p>`;
+      // <description> stays plain text so aggregators that template the
+      // description field verbatim (dlvr.it, etc.) produce clean social
+      // posts. Full HTML (inline image) goes in <content:encoded>, which
+      // proper feed readers prefer.
+      const richContent = `<p><img src="${previewUrl}" alt="${title} - ${artistName}" style="max-width:100%;height:auto;border-radius:6px;" /></p><p>${rationale}</p>`;
       return {
         title: `${title} - ${artistName}`,
         link: `/weather/${w.data.run_id}/${w.data.slug}/`,
         pubDate: new Date(w.data.created_at || w.data.date || Date.now()),
-        description: richDescription,
+        description: rationale,
+        content: richContent,
         categories: [artistName, "generative", "weather"],
         // <enclosure> is the canonical RSS spec for attached media —
         // length is required by the spec but readers tolerate 0; the

@@ -25,16 +25,29 @@ const cards = ARTISTS.map((a) => ({
   ...a,
   has_lora: hasLora(a.key),
   thumbs: (byArtist.get(a.key) ?? []).map((p) => ({
-    src: `${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`,
+    base: `${PROD}/weather/${p.run_id}/${p.slug}`,
     alt: `${p.slug} (${a.display})`,
   })),
 }));
+
+const collectionLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Artists",
+  url: "https://art.jamestannahill.com/artist/",
+  description: `${TOTAL_ARTISTS} artistic lenses interpreting the same atmospheric data.`,
+  isPartOf: { "@type": "WebSite", name: "art.jt", url: "https://art.jamestannahill.com/" },
+};
 ---
 
 <Base
-  title="Artists - art.jt"
+  title="Artists — art.jt"
   description={`${TOTAL_ARTISTS} artistic lenses interpreting the same atmospheric data. ${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes.`}
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(collectionLd)} />
+  </Fragment>
+
   <h1>Artists</h1>
   <p class="muted">
     {TOTAL_ARTISTS} artistic lenses interpret the same weather data into
@@ -48,7 +61,10 @@ const cards = ARTISTS.map((a) => ({
         <div class="mosaic">
           {a.thumbs.length > 0 ? (
             a.thumbs.map((t) => (
-              <img src={t.src} alt={t.alt} loading="lazy" decoding="async" />
+              <picture>
+                <source type="image/webp" srcset={`${t.base}/preview-480.webp`} />
+                <img src={`${t.base}/preview-2048.png`} alt={t.alt} loading="lazy" decoding="async" width="1024" height="1024" />
+              </picture>
             ))
           ) : (
             <div class="empty">no work yet</div>
@@ -101,6 +117,7 @@ const cards = ARTISTS.map((a) => ({
     aspect-ratio: 1 / 1;
     background: #0a0a0a;
   }
+  .mosaic picture,
   .mosaic img {
     width: 100%;
     height: 100%;
@@ -108,7 +125,7 @@ const cards = ARTISTS.map((a) => ({
     display: block;
   }
   /* Span across both columns/rows when fewer than 4 */
-  .mosaic img:only-child { grid-column: 1 / -1; grid-row: 1 / -1; }
+  .mosaic picture:only-child { grid-column: 1 / -1; grid-row: 1 / -1; }
   .mosaic .empty {
     grid-column: 1 / -1;
     grid-row: 1 / -1;

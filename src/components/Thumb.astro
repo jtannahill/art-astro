@@ -17,6 +17,8 @@ interface Props {
   alt: string;
   /** "lazy" for grids, "eager" for hero. */
   loading?: "lazy" | "eager";
+  /** "high" for the above-the-fold hero (LCP candidate) only. */
+  fetchpriority?: "high" | "low" | "auto";
   /** sizes attribute. Defaults to a reasonable card-grid breakpoints
    *  hint; pass "100vw" for hero. */
   sizes?: string;
@@ -30,6 +32,7 @@ const {
   base,
   alt,
   loading = "lazy",
+  fetchpriority,
   sizes = "(max-width: 540px) 50vw, (max-width: 900px) 33vw, 240px",
   viewTransitionName,
   square = true,
@@ -54,6 +57,7 @@ const styleAttr = viewTransitionName
     src={png}
     alt={alt}
     loading={loading}
+    fetchpriority={fetchpriority}
     decoding="async"
     width="1024"
     height="1024"

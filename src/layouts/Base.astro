@@ -1,17 +1,56 @@
 ---
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
+import { getCollection } from "astro:content";
 
 interface Props {
   title: string;
   description?: string;
   canonicalPath?: string;
+  /** og:image override. Defaults to today's first artwork (1200px WebP). */
+  ogImage?: string;
+  /** og:type. Defaults to "website". */
+  ogType?: string;
+  /** Set false on pages (e.g. single artwork) that inject their own
+   *  og:/twitter: tags via the head slot — prevents duplicate tags. */
+  socialMeta?: boolean;
 }
 
-const { title, description, canonicalPath } = Astro.props;
+const {
+  title,
+  description,
+  canonicalPath,
+  ogImage,
+  ogType = "website",
+  socialMeta = true,
+} = Astro.props;
 const canonical = canonicalPath
   ? new URL(canonicalPath, Astro.site).toString()
   : new URL(Astro.url.pathname, Astro.site).toString();
+
+// Default og:image: the strongest piece from the newest run in the
+// build-time data snapshot. preview-1200.webp is the social-card-sized
+// variant (~150-250 KB vs the 1.7 MB 2048 PNG).
+const PROD = "https://art.jamestannahill.com";
+let resolvedOgImage = ogImage;
+if (socialMeta && !resolvedOgImage) {
+  try {
+    const weather = await getCollection("weather");
+    const latest = weather
+      .filter((w) => w.data.run_id && w.data.slug)
+      .sort(
+        (a, b) =>
+          (b.data.run_id ?? "").localeCompare(a.data.run_id ?? "") ||
+          (b.data.quality_score ?? 0) - (a.data.quality_score ?? 0)
+      )[0];
+    if (latest) {
+      resolvedOgImage = `${PROD}/weather/${latest.data.run_id}/${latest.data.slug}/preview-1200.webp`;
+    }
+  } catch {
+    // Data snapshot unavailable (fresh checkout before pull-data):
+    // simply omit og:image rather than fail the build.
+  }
+}
 ---
 
 <!DOCTYPE html>
@@ -23,6 +62,18 @@ const canonical = canonicalPath
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
+    {socialMeta && (
+      <>
+        <meta property="og:title" content={title} />
+        {description && <meta property="og:description" content={description} />}
+        <meta property="og:url" content={canonical} />
+        <meta property="og:site_name" content="art.jt" />
+        <meta property="og:type" content={ogType} />
+        {resolvedOgImage && <meta property="og:image" content={resolvedOgImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        {resolvedOgImage && <meta name="twitter:image" content={resolvedOgImage} />}
+      </>
+    )}
     <ClientRouter />
     <slot name="head" />
   </head>

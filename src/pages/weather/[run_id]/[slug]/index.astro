@@ -20,8 +20,12 @@ const PROD = "https://art.jamestannahill.com";
 const WATERMARK_URL = "https://6sdaen4674towfh6p3lwnb4dta0cggvr.lambda-url.us-east-1.on.aws";
 const PRINT_SHOP_URL = "https://s4qic3km3mmmaz377eiw5ggsrm0seuvs.lambda-url.us-east-1.on.aws";
 
-const previewUrl = `${PROD}/weather/${piece.run_id}/${piece.slug}/preview-2048.png`;
-const svgUrl = `${PROD}/weather/${piece.run_id}/${piece.slug}/artwork.svg`;
+const assetBase = `${PROD}/weather/${piece.run_id}/${piece.slug}`;
+const previewUrl = `${assetBase}/preview-2048.png`;
+// Social-card image: 1200px WebP (~150-250 KB) instead of the 1.7 MB
+// 2048 PNG. Scrapers want ~1200px and time out on multi-MB images.
+const ogImageUrl = `${assetBase}/preview-1200.webp`;
+const svgUrl = `${assetBase}/artwork.svg`;
 
 const artist = ARTISTS_BY_KEY[piece.artist];
 const artistName = artist?.display ?? piece.artist.replace(/_/g, " ");
@@ -117,16 +121,20 @@ const TIPS = {
 };
 ---
 
-<Base title={`${title} - ${piece.date}- art.jt`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`}>
+{/* socialMeta={false}: this page emits its own og:/twitter: tags below —
+    the Base defaults would duplicate them. */}
+<Base title={`${title} - ${piece.date} — art.jt`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`} socialMeta={false}>
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(visualArtwork)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />
     <meta property="og:type" content="article" />
     <meta property="og:title" content={`${title} - Weather Art - ${piece.date}`} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={previewUrl} />
+    <meta property="og:url" content={`${PROD}/weather/${piece.run_id}/${piece.slug}/`} />
+    <meta property="og:site_name" content="art.jt" />
+    <meta property="og:image" content={ogImageUrl} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content={previewUrl} />
+    <meta name="twitter:image" content={ogImageUrl} />
   </Fragment>
 
   <nav class="crumbs">
@@ -156,13 +164,25 @@ const TIPS = {
   <span data-pagefind-filter={`year:${piece.date.slice(0, 4)}`} hidden>{piece.date.slice(0, 4)}</span>
 
   <figure class="hero">
-    <img
-      src={previewUrl}
-      alt={`${piece.slug} weather artwork`}
-      loading="eager"
-      decoding="async"
-      style={`view-transition-name: art-${piece.run_id.replace(/-/g, "")}-${piece.slug.replace(/-/g, "")};`}
-    />
+    {/* WebP srcset keeps the LCP hero under ~200 KB; the 2048 PNG
+        (~1.7 MB) remains the fallback for any piece missing variants. */}
+    <picture>
+      <source
+        type="image/webp"
+        srcset={`${assetBase}/preview-960.webp 960w, ${assetBase}/preview-1920.webp 1920w`}
+        sizes="(max-width: 768px) 100vw, 672px"
+      />
+      <img
+        src={previewUrl}
+        alt={`${piece.slug} weather artwork`}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        width={w}
+        height={h}
+        style={`view-transition-name: art-${piece.run_id.replace(/-/g, "")}-${piece.slug.replace(/-/g, "")};`}
+      />
+    </picture>
   </figure>
 
   <div class="actions">
@@ -286,7 +306,7 @@ const TIPS = {
   <div class="drawer-overlay" data-drawer-overlay></div>
   <aside class="drawer" data-drawer aria-hidden="true">
     <button class="drawer-close" data-drawer-close aria-label="Close print options">×</button>
-    <img class="drawer-thumb" src={previewUrl} alt={piece.slug} />
+    <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt={piece.slug} loading="lazy" decoding="async" width={w} height={h} />
     <h3 class="drawer-title">{title}</h3>
     <p class="drawer-sub">{artistName} · {piece.date}</p>
     <div class="size-options" data-size-options>

@@ -39,7 +39,7 @@ function fmtCoords(lat?: number, lng?: number) {
 ---
 
 <Base
-  title={`${display} palette- art.jt`}
+  title={`${display} palette — art.jt`}
   description={`Sentinel-2 color samples from ${display}. ${samples.length} samples archived.`}
   canonicalPath={`/palettes/${location_slug}/`}
 >
@@ -66,6 +66,8 @@ function fmtCoords(lat?: number, lng?: number) {
           alt={`${s.location_slug} satellite ${s.date}`}
           loading="lazy"
           decoding="async"
+          width="512"
+          height="512"
         />
         <div class="card-body">
           <h2>{s.date}</h2>

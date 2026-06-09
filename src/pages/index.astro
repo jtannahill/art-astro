@@ -76,12 +76,31 @@ const dropdownArtists = ARTISTS.map((a) => ({
   display: a.display,
   link: a.link,
 }));
+
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "art.jt",
+  alternateName: "art.jamestannahill.com",
+  url: `${PROD}/`,
+  description:
+    "Daily generative art from real atmospheric data. Weather-driven compositions rendered through artist lenses with custom FLUX.1-dev LoRA fine-tunes.",
+  creator: {
+    "@type": "Person",
+    name: "James Tannahill",
+    url: "https://jamestannahill.com",
+  },
+};
 ---
 
 <Base
-  title="art.jt - today's weather art"
+  title="art.jt — today's weather art"
   description={`Daily generative art from real atmospheric data. ${TOTAL_ARTISTS} artist lenses, ${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes.`}
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(websiteLd)} />
+  </Fragment>
+
   <h1>Today's Weather Art</h1>
 
   <div class="artist-bar">
@@ -143,11 +162,15 @@ const dropdownArtists = ARTISTS.map((a) => ({
     <p class="empty">No weather art generated yet today. Check back soon.</p>
   ) : (
     <div class="grid">
-      {todaysPieces.map((p) => (
+      {todaysPieces.map((p, i) => (
         <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
+          {/* First card is the LCP candidate: eager + high priority.
+              Everything below stays lazy. */}
           <Thumb
             base={`${PROD}/weather/${p.run_id}/${p.slug}`}
             alt={`${p.slug} weather art`}
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchpriority={i === 0 ? "high" : undefined}
             viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
           />
           <div class="card-body">
@@ -177,7 +200,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
       {latestPalettes.map((p) => (
         <a class="card palette-card" href={`/palettes/${p.location_slug}/`}>
           <div class="thumb">
-            <img src={paletteThumb(p.location_slug, p.date)} alt={`${p.location_slug} satellite`} loading="lazy" decoding="async" />
+            <img src={paletteThumb(p.location_slug, p.date)} alt={`${p.location_slug} satellite`} loading="lazy" decoding="async" width="512" height="512" />
           </div>
           <div class="card-body">
             <h3>{fmtSlug(p.location_slug)}</h3>

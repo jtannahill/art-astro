@@ -55,6 +55,17 @@ jobs:
         # Skip pull-data inside this step (already done above).
         run: npm run build:no-pull
 
+      - uses: astral-sh/setup-uv@v5
+
+      - name: backfill thumbnails
+        # Self-healing: the art-image-resize Lambda emits
+        # preview-{480,960,1920}.webp on each new piece but not yet the
+        # 1200px og:image variant. Generate any missing WebP variants
+        # (usually just today's ~10 pieces) before the HTML referencing
+        # them goes live. Never fails the deploy (PNG fallback covers
+        # stragglers).
+        run: uv run --no-project --with pillow --with boto3 python scripts/backfill-thumbs.py
+
       - name: deploy
         run: |
           # Sanity: confirm credentials are valid before any S3 work

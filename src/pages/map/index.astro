@@ -40,7 +40,9 @@ const weatherMarkers: MarkerW[] = allWeather
     title: w.data.slug.replace(/-/g, " "),
     artist: w.data.artist,
     url: `/weather/${w.data.run_id}/${w.data.slug}/`,
-    img: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
+    // 480px WebP (~10-45 KB) — popups are ~260px wide; the 2048 PNG
+    // here used to cost ~1.7 MB per marker click.
+    img: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-480.webp`,
   }));
 
 // One palette pin per location (latest sample)
@@ -63,7 +65,7 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
 ---
 
 <Base
-  title="World Map- art.jt"
+  title="World Map — art.jt"
   description="Every artwork and palette plotted on a dark globe."
 >
   <h1>World Map</h1>
