@@ -106,7 +106,7 @@ function fmtRunDate(run_id: string) {
 const collectionLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  name: `Weather Art Archive — page ${page.currentPage}`,
+  name: `Weather Art Archive - page ${page.currentPage}`,
   url: `https://art.jamestannahill.com/archive/${page.currentPage > 1 ? page.currentPage + "/" : ""}`,
   description: `Browse ${totalRuns} weather-driven generations across the full archive.`,
   isPartOf: { "@type": "WebSite", name: "art.jt", url: "https://art.jamestannahill.com/" },
@@ -114,7 +114,7 @@ const collectionLd = {
 ---
 
 <Base
-  title={`Archive page ${page.currentPage} — art.jt`}
+  title={`Archive page ${page.currentPage} - art.jt`}
   description={`Browse ${totalRuns} weather-driven generations across the full archive. Page ${page.currentPage} of ${page.lastPage}.`}
 >
   <Fragment slot="head">

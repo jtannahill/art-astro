@@ -123,7 +123,7 @@ const TIPS = {
 
 {/* socialMeta={false}: this page emits its own og:/twitter: tags below —
     the Base defaults would duplicate them. */}
-<Base title={`${title} - ${piece.date} — art.jt`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`} socialMeta={false}>
+<Base title={`${title} - ${piece.date} - art.jt`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`} socialMeta={false}>
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(visualArtwork)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />

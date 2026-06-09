@@ -13,7 +13,7 @@ export async function GET(context: { site: URL | undefined }) {
     .slice(0, 50);
 
   return rss({
-    title: "art.jt — generative weather art",
+    title: "art.jt - generative weather art",
     description: `Daily generative artwork from real atmospheric data, interpreted through ${TOTAL_ARTISTS} artist lenses (${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes).`,
     site,
     customData:
