@@ -114,6 +114,9 @@ function fmtCoords(lat?: number, lng?: number) {
   }
   .card img {
     width: 100%;
+    /* height:auto keeps the height attribute hint from overriding the
+       16:9 aspect-ratio below. */
+    height: auto;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     display: block;

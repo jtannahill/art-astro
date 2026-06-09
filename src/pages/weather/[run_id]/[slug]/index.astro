@@ -554,6 +554,9 @@ const TIPS = {
   .drawer-thumb {
     width: 100%;
     max-width: 200px;
+    /* The height attribute is a presentational hint; without an author
+       height it applies literally and stretches the thumb. */
+    height: auto;
     display: block;
     margin: 0 auto 1rem;
     border-radius: 4px;
