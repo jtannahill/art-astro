@@ -77,6 +77,11 @@ const dropdownArtists = ARTISTS.map((a) => ({
   link: a.link,
 }));
 
+const heroPiece = todaysPieces[0];
+const heroBase = heroPiece
+  ? `${PROD}/weather/${heroPiece.run_id}/${heroPiece.slug}`
+  : null;
+
 const websiteLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -99,6 +104,16 @@ const websiteLd = {
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(websiteLd)} />
+    {heroBase && (
+      <link
+        rel="preload"
+        as="image"
+        href={`${heroBase}/preview-960.webp`}
+        type="image/webp"
+        imagesrcset={`${heroBase}/preview-480.webp 480w, ${heroBase}/preview-960.webp 960w, ${heroBase}/preview-1920.webp 1920w`}
+        imagesizes="(max-width: 540px) 50vw, (max-width: 900px) 33vw, 240px"
+      />
+    )}
   </Fragment>
 
   <h1>Today's Weather Art</h1>
@@ -336,8 +351,8 @@ const websiteLd = {
     align-items: center;
     gap: 0.5rem;
     padding: 0.65rem 1.5rem;
-    background: linear-gradient(135deg, #2a1a4e, #1a1a3e);
-    border: 1px solid #c4b5fd33;
+    background: linear-gradient(135deg, #2a2218, #1a1814);
+    border: 1px solid #c9a66b33;
     border-radius: 8px;
     color: var(--color-accent);
     font-size: 0.95rem;
@@ -347,8 +362,8 @@ const websiteLd = {
     white-space: nowrap;
   }
   .gen-btn:hover {
-    background: linear-gradient(135deg, #3a2a6e, #2a2a5e);
-    border-color: #c4b5fd66;
+    background: linear-gradient(135deg, #3a3228, #2a2420);
+    border-color: #c9a66b66;
   }
   .gen-btn.loading { opacity: 0.6; pointer-events: none; }
   .spinner {
@@ -450,7 +465,7 @@ const websiteLd = {
     transform: translateX(-50%) translateY(20px);
     padding: 0.75rem 1.25rem;
     background: #1a1a2e;
-    border: 1px solid #c4b5fd44;
+    border: 1px solid #c9a66b44;
     border-radius: 8px;
     color: #ddd;
     font-size: 0.9rem;

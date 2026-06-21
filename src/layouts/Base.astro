@@ -65,6 +65,13 @@ if (socialMeta && !resolvedOgImage) {
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="canonical" href={canonical} />
+    <link rel="ai" href="/llms.txt" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap"
+      rel="stylesheet"
+    />
     <meta name="generator" content={Astro.generator} />
     {socialMeta && (
       <>
@@ -75,6 +82,8 @@ if (socialMeta && !resolvedOgImage) {
         <meta property="og:type" content={ogType} />
         {resolvedOgImage && <meta property="og:image" content={resolvedOgImage} />}
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        {description && <meta name="twitter:description" content={description} />}
         {resolvedOgImage && <meta name="twitter:image" content={resolvedOgImage} />}
       </>
     )}
@@ -444,8 +453,8 @@ if (socialMeta && !resolvedOgImage) {
       }
       .ftr-subscribe button {
         padding: 0.45rem 0.95rem;
-        background: linear-gradient(135deg, #2a1a4e, #1a1a3e);
-        border: 1px solid #c4b5fd44;
+        background: linear-gradient(135deg, #2a2218, #1a1814);
+        border: 1px solid #c9a66b44;
         border-radius: 6px;
         color: var(--color-accent);
         font: inherit;
@@ -454,8 +463,8 @@ if (socialMeta && !resolvedOgImage) {
         transition: border-color 0.15s, background 0.15s;
       }
       .ftr-subscribe button:hover {
-        border-color: #c4b5fd88;
-        background: linear-gradient(135deg, #3a2a6e, #2a2a5e);
+        border-color: #c9a66b88;
+        background: linear-gradient(135deg, #3a3228, #2a2420);
       }
       .ftr-subscribe button:disabled { opacity: 0.5; cursor: default; }
       .ftr-sub-msg {
