@@ -26,6 +26,7 @@ export const ARTISTS: ArtistInfo[] = [
   { key: "joan_mitchell",       display: "Joan Mitchell",       link: "https://www.guggenheim.org/artwork/artist/joan-mitchell" },
   { key: "mark_tobey",          display: "Mark Tobey",          link: "https://www.guggenheim.org/artwork/artist/mark-tobey" },
   { key: "peter_max",           display: "Peter Max",           link: "https://petermax.com" },
+  { key: "norman_lewis",        display: "Norman Lewis",        link: "https://www.wikiart.org/en/norman-lewis" },
 ];
 
 export const ARTISTS_BY_KEY: Record<string, ArtistInfo> = Object.fromEntries(
