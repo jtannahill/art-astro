@@ -39,6 +39,12 @@ export interface LoraMethodology {
   source_label: string;
   /** Trailing fragment appended after the source label - may contain HTML */
   series_html: string;
+  /**
+   * Optional override for the captioning-method sentence. Omit to use the
+   * default (hand-written title/medium/dimensions/year captions). Set it for
+   * LoRAs trained with the trainer's autocaption instead.
+   */
+  caption_html?: string;
   training_set_count: number;
   lora_rank: number;
   steps: number;
@@ -149,6 +155,44 @@ export const LORA_METHODOLOGY: Record<string, LoraMethodology> = {
     train_minutes: 12,
     trigger_word: "gerhard_richter_style",
     filed_date: "2026-05-05",
+  },
+  arshile_gorky: {
+    artist_display: "Arshile Gorky",
+    source_url: "https://www.wikiart.org/en/arshile-gorky",
+    source_label: "WikiArt catalog",
+    series_html:
+      ", drawn from his mature biomorphic abstractions (1940-1948) - fluid " +
+      "organic forms, thinned washes, and linear armatures that bridge " +
+      "Surrealism and Abstract Expressionism",
+    caption_html:
+      "Images were auto-captioned by the trainer with the trigger word " +
+      "prepended, binding it to the artist's visual language rather than a " +
+      "generic style label.",
+    training_set_count: 27,
+    lora_rank: 16,
+    steps: 1000,
+    train_minutes: 10,
+    trigger_word: "arshile_gorky_style",
+    filed_date: "2026-06-22",
+  },
+  norman_lewis: {
+    artist_display: "Norman Lewis",
+    source_url: "https://www.wikiart.org/en/norman-lewis",
+    source_label: "WikiArt catalog",
+    series_html:
+      ", drawn from his mature abstract period (1945-1979) - calligraphic " +
+      "processions of small marks, glyphs, and crowds dissolving across deep " +
+      "atmospheric grounds",
+    caption_html:
+      "Images were auto-captioned by the trainer with the trigger word " +
+      "prepended, binding it to the artist's visual language rather than a " +
+      "generic style label.",
+    training_set_count: 14,
+    lora_rank: 16,
+    steps: 1000,
+    train_minutes: 20,
+    trigger_word: "norman_lewis_style",
+    filed_date: "2026-06-22",
   },
 };
 

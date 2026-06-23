@@ -16,6 +16,12 @@ const { m } = Astro.props;
 
 const stepsFmt = m.steps.toLocaleString("en-US");
 
+const DEFAULT_CAPTION =
+  "Every image was captioned with its title, medium, dimensions, and year, " +
+  "binding the trigger to specific painterly cues rather than a generic " +
+  "style label.";
+const captionHtml = m.caption_html ?? DEFAULT_CAPTION;
+
 const TIPS = {
   base:
     "Base diffusion model from Black Forest Labs. A 12B-parameter " +
@@ -24,11 +30,11 @@ const TIPS = {
   set:
     "Number of curated canvas reproductions used to fine-tune the LoRA. " +
     "Each image was hand-picked for fidelity to the artist's signature style " +
-    "and captioned with title, medium, dimensions, and year.",
+    "and captioned to bind the trigger word to the artist's painterly cues.",
   rank:
     "Dimensionality of the low-rank adaptation matrices. Higher rank captures " +
     "more style nuance but takes longer to train and risks overfitting on small " +
-    "datasets. 32 is a balanced choice for ~30-image sets.",
+    "datasets. A rank of 16-32 is typical for ~15-30 image sets.",
   steps:
     "Number of optimizer updates during fine-tuning. Each step processes a " +
     "single image and nudges the LoRA weights toward the training distribution. " +
@@ -68,9 +74,7 @@ const TIPS = {
     Pieces in this gallery are produced by a private FLUX.1-dev LoRA trained
     on {m.training_set_count} hand-curated reproductions from
     <a href={m.source_url} target="_blank" rel="noopener" class="bb-link">{m.source_label}</a><Fragment set:html={m.series_html} />.
-    Every image was captioned with its title, medium, dimensions, and year,
-    binding the trigger to specific painterly cues rather than a generic
-    style label.
+    <Fragment set:html={captionHtml} />
   </p>
 
   <div class="bb-grid">
