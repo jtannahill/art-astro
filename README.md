@@ -89,7 +89,7 @@ src/
     index.astro         Homepage with today's run + weather→art panel
     about.astro         /about/
     archive/[...page].astro    Paginated /archive/ (12 pages of 8 runs each)
-    artist/index.astro          /artist/ index (16-card mosaic)
+    artist/index.astro          /artist/ index (artist-card mosaic)
     artist/[key]/index.astro    Per-artist gallery + methodology block
     weather/[run_id]/[slug]/    Single-piece page (854 of these)
     palettes/                   /palettes/ + per-location detail

@@ -1,6 +1,8 @@
 /**
- * Single source of truth for the 16-artist roster + the 7 LoRA
+ * Single source of truth for the artist roster + the LoRA
  * methodology blocks. Both /artist/ and /artist/[key]/ render from here.
+ * Counts (TOTAL_ARTISTS / LORA_ARTIST_COUNT) derive from these arrays in
+ * counts.ts, so adding an artist here updates every count site-wide.
  */
 
 export interface ArtistInfo {
