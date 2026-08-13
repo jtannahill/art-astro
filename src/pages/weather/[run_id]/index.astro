@@ -1,0 +1,191 @@
+---
+/**
+ * Run index: every piece produced by a single pipeline run.
+ *
+ * Exists because /weather/{run_id}/{slug}/ pages linked to /weather/{run_id}/
+ * (their own breadcrumb) and nothing was rendered there. Googlebot also
+ * ascends paths on its own, so the gap showed up in Search Console as 101
+ * "Not found (404)" URLs on 2026-08-13 - every one of them a bare run
+ * directory whose children were live and sitemapped.
+ */
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import Base from "../../../layouts/Base.astro";
+import Thumb from "../../../components/Thumb.astro";
+import { ARTISTS_BY_KEY } from "../../../data/artists.ts";
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const all = await getCollection("weather");
+  const byRun = new Map<string, typeof all>();
+  for (const w of all) {
+    if (!w.data.run_id || !w.data.slug) continue;
+    const bucket = byRun.get(w.data.run_id) ?? [];
+    bucket.push(w);
+    byRun.set(w.data.run_id, bucket);
+  }
+  return [...byRun.entries()].map(([run_id, entries]) => ({
+    params: { run_id },
+    props: {
+      pieces: entries
+        .map((e) => e.data)
+        // Strongest work first: quality_score, then the raw weather score.
+        .sort(
+          (a, b) =>
+            (b.quality_score ?? 0) - (a.quality_score ?? 0) ||
+            (b.score ?? 0) - (a.score ?? 0)
+        ),
+    },
+  }));
+};
+
+type Piece = import("astro:content").CollectionEntry<"weather">["data"];
+const { pieces } = Astro.props as { pieces: Piece[] };
+const { run_id } = Astro.params;
+
+const PROD = "https://art.jamestannahill.com";
+
+function pretty(slug: string) {
+  return slug
+    .split("-")
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(" ");
+}
+
+const date = pieces[0]?.date ?? "";
+const artistNames = [
+  ...new Set(
+    pieces.map((p) => ARTISTS_BY_KEY[p.artist]?.display ?? p.artist.replace(/_/g, " "))
+  ),
+];
+const lead = pieces[0];
+
+const title = `Run ${run_id}`;
+const description = `${pieces.length} generative weather ${
+  pieces.length === 1 ? "piece" : "pieces"
+} rendered on ${date} from live atmospheric data${
+  artistNames.length ? `, after ${artistNames.slice(0, 3).join(", ")}` : ""
+}.`;
+
+const collectionPage = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: `Weather Art - Run ${run_id}`,
+  description,
+  url: `${PROD}/weather/${run_id}/`,
+  dateCreated: lead?.created_at || date,
+  isPartOf: { "@type": "WebSite", name: "art.jt", url: `${PROD}/` },
+  hasPart: pieces.map((p) => ({
+    "@type": "VisualArtwork",
+    name: `${pretty(p.slug)} - ${p.date}`,
+    url: `${PROD}/weather/${p.run_id}/${p.slug}/`,
+    image: `${PROD}/weather/${p.run_id}/${p.slug}/preview-2048.png`,
+    creator: { "@type": "Person", name: "James Tannahill" },
+  })),
+};
+
+const breadcrumb = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${PROD}/` },
+    { "@type": "ListItem", position: 2, name: "Archive", item: `${PROD}/archive/` },
+    { "@type": "ListItem", position: 3, name: run_id },
+  ],
+};
+---
+
+<Base
+  title={`Run ${run_id} - ${date} - art.jt`}
+  description={description}
+  canonicalPath={`/weather/${run_id}/`}
+  ogImage={lead ? `${PROD}/weather/${lead.run_id}/${lead.slug}/preview-1200.webp` : undefined}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(collectionPage)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />
+  </Fragment>
+
+  <nav class="crumbs">
+    <a href="/">Home</a>
+    <span>/</span>
+    <a href="/archive/">Archive</a>
+    <span>/</span>
+    <span>{run_id}</span>
+  </nav>
+
+  <h1>Run {run_id}</h1>
+  <p class="lede muted">
+    {pieces.length} {pieces.length === 1 ? "piece" : "pieces"} · {date}
+    {artistNames.length > 0 && <> · after {artistNames.join(", ")}</>}
+  </p>
+
+  <div class="grid">
+    {pieces.map((p) => (
+      <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
+        <Thumb
+          base={`${PROD}/weather/${p.run_id}/${p.slug}`}
+          alt={`${p.slug} weather artwork`}
+          viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
+        />
+        <span class="card-title">{pretty(p.slug)}</span>
+        <span class="card-sub">
+          {ARTISTS_BY_KEY[p.artist]?.display ?? p.artist.replace(/_/g, " ")}
+        </span>
+      </a>
+    ))}
+  </div>
+
+  <p class="more"><a href="/archive/">Browse the full archive</a></p>
+</Base>
+
+<style>
+  .crumbs {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .crumbs a { color: var(--color-link); }
+  h1 {
+    font-size: 2rem;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.02em;
+  }
+  .lede { font-size: 0.95rem; margin: 0 0 1.5rem; text-transform: capitalize; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    display: block;
+    border: 1px solid #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0a0a0a;
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: #444; text-decoration: none; }
+  .card-title {
+    display: block;
+    padding: 0.6rem 0.75rem 0;
+    color: #ddd;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+  }
+  .card-sub {
+    display: block;
+    padding: 0.1rem 0.75rem 0.7rem;
+    color: var(--color-muted);
+    font-size: 0.75rem;
+    text-transform: capitalize;
+  }
+
+  .more { margin: 2rem 0 0; font-size: 0.9rem; }
+  .more a { color: var(--color-link); }
+</style>

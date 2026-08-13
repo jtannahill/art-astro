@@ -1,3 +1,14 @@
 User-agent: *
 Allow: /
+
+# Pipeline artifacts. The art-site-rebuild Lambda mirrors s3://<bucket>/weather/*
+# and /palettes/* into the site/ prefix CloudFront serves, so the generator's
+# raw metadata.json files land in the same URL namespace as rendered HTML.
+# They are machine artifacts with no reader value and were consuming crawl
+# budget (81 of them showed up as "Crawled - currently not indexed" in Search
+# Console on 2026-08-13). Narrow rules only: /api/*.json and feed.xml/rss.xml
+# are real endpoints and must stay crawlable.
+Disallow: /weather/*/metadata.json
+Disallow: /palettes/*/metadata.json
+
 Sitemap: https://art.jamestannahill.com/sitemap-index.xml
