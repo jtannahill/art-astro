@@ -14,6 +14,9 @@ import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
+// Cloudflare Turnstile widget for jamestannahill.com (hostnames cover subdomains). The trigger
+// Lambda verifies the token server-side; a bare GET with no token is refused.
+const TURNSTILE_SITE_KEY = "0x4AAAAAADKU-hbxlRBQvuha";
 
 const allWeather = await getCollection("weather");
 const allPalettes = await getCollection("palettes");
@@ -131,6 +134,8 @@ const websiteLd = {
     </button>
     <a id="artist-link" href={dropdownArtists[0].link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
   </div>
+  <div class="gen-check cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="compact"></div>
+  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
   {/* Plain-English weather → art map. Same data the model gets, in
        human terms - so a visitor immediately understands why a piece
@@ -257,12 +262,24 @@ const websiteLd = {
   }
   if (btn && sel) {
     btn.addEventListener("click", () => {
+      const token = window.turnstile ? window.turnstile.getResponse() : "";
+      if (!token) {
+        flash("Please complete the check below the Generate button first");
+        return;
+      }
       btn.classList.add("loading");
       const artist = sel.value;
-      fetch(`${TRIGGER_URL}?artist=${encodeURIComponent(artist)}`)
+      fetch(TRIGGER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artist, token }),
+      })
         .then((r) => r.json())
         .then((data) => {
-          if (data.status === "already_running") {
+          if (window.turnstile) window.turnstile.reset();
+          if (data.status === "forbidden") {
+            flash(data.message ?? "Verification failed - reload and try again");
+          } else if (data.status === "already_running") {
             flash("Pipeline is already running - check back in a few minutes");
           } else if (data.status === "cooldown") {
             flash(data.message ?? "Cooldown active - try again later");
@@ -328,6 +345,7 @@ const websiteLd = {
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
+  .gen-check { margin: 0.5rem 0 0; min-height: 65px; }
   .artist-bar select {
     flex: 1;
     min-width: 160px;
