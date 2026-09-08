@@ -116,6 +116,37 @@ src/
 - **IAM**: deploy user `art-astro-ci` with scoped `s3:*Object` on
   `site/*`, `dynamodb:Scan` on `art-generator`, and
   `cloudfront:CreateInvalidation` on the distro.
+- **Security headers**: CloudFront response headers policy
+  `art-jamestannahill-security-csp` (`b0f5a2be-b280-4be9-a7a6-beace6435a22`),
+  mirrored in `infra/response-headers-policy.json`. The CSP is the source of
+  truth for which third-party hosts the site may load: Mapbox, Google Fonts
+  (`style-src` + `font-src`), and Google Analytics (`script-src` for
+  googletagmanager, `connect-src` + `img-src` for the collect endpoints).
+  Adding a third-party script without adding it here means it silently
+  never runs. To apply a change:
+
+  ```sh
+  aws cloudfront update-response-headers-policy \
+    --id b0f5a2be-b280-4be9-a7a6-beace6435a22 \
+    --if-match "$(aws cloudfront get-response-headers-policy-config \
+      --id b0f5a2be-b280-4be9-a7a6-beace6435a22 --query ETag --output text)" \
+    --response-headers-policy-config file://infra/response-headers-policy.json
+  ```
+
+## Analytics
+
+GA4 property `art.jamestannahill.com` (measurement ID `G-5KG25EY8YL`),
+loaded from `public/scripts/analytics.js` and gated by
+`public/scripts/consent.js`. gtag loads only after the visitor accepts.
+
+Page views: `gtag('config', ...)` sends the first one, and
+`astro:after-swap` sends one per ClientRouter navigation. `after-swap` does
+not fire on the initial load, so views are not double-counted. `consent.js`
+binds from `astro:page-load` only, for the same reason.
+
+Country detection uses `/cdn-cgi/trace`, which does not exist on this
+distribution (CloudFront, not Cloudflare), so `requiresConsent` falls back
+to `true` and every visitor sees the banner.
 
 ## Migration history
 

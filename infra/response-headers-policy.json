@@ -1,0 +1,23 @@
+{
+ "Name": "art-jamestannahill-security-csp",
+ "Comment": "Security headers for art.jamestannahill.com (CloudFront E1ZBBUI25FIV7)",
+ "SecurityHeadersConfig": {
+  "XSSProtection": {
+   "Override": true,
+   "Protection": true,
+   "ModeBlock": true
+  },
+  "FrameOptions": {
+   "Override": true,
+   "FrameOption": "SAMEORIGIN"
+  },
+  "ReferrerPolicy": {
+   "Override": true,
+   "ReferrerPolicy": "strict-origin-when-cross-origin"
+  },
+  "ContentSecurityPolicy": {
+   "Override": true,
+   "ContentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://api.mapbox.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com; img-src 'self' data: blob: https://*.mapbox.com https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.mapbox.com https://events.mapbox.com https://kvorpfc3nbj6h7otsc2634duxm0xtqis.lambda-url.us-east-1.on.aws https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws https://s4qic3km3mmmaz377eiw5ggsrm0seuvs.lambda-url.us-east-1.on.aws; worker-src 'self' blob:; child-src blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+  }
+ }
+}
