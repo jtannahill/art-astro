@@ -1,0 +1,26 @@
+{
+ "Comment": "CachingOptimized + CloudFront-Viewer-Country (cache key includes country)",
+ "Name": "art-caching-optimized-viewer-country",
+ "DefaultTTL": 86400,
+ "MaxTTL": 31536000,
+ "MinTTL": 1,
+ "ParametersInCacheKeyAndForwardedToOrigin": {
+  "EnableAcceptEncodingGzip": true,
+  "EnableAcceptEncodingBrotli": true,
+  "HeadersConfig": {
+   "HeaderBehavior": "whitelist",
+   "Headers": {
+    "Quantity": 1,
+    "Items": [
+     "CloudFront-Viewer-Country"
+    ]
+   }
+  },
+  "CookiesConfig": {
+   "CookieBehavior": "none"
+  },
+  "QueryStringsConfig": {
+   "QueryStringBehavior": "none"
+  }
+ }
+}

@@ -144,9 +144,20 @@ Page views: `gtag('config', ...)` sends the first one, and
 not fire on the initial load, so views are not double-counted. `consent.js`
 binds from `astro:page-load` only, for the same reason.
 
-Country detection uses `/cdn-cgi/trace`, which does not exist on this
-distribution (CloudFront, not Cloudflare), so `requiresConsent` falls back
-to `true` and every visitor sees the banner.
+Country detection reads a `jt_country` cookie set by the
+`art-viewer-country-cookie` CloudFront Function (viewer-response,
+`infra/viewer-country-cookie.js`) from the `CloudFront-Viewer-Country`
+header. `/cdn-cgi/trace` remains as a fallback but 404s here: this is
+CloudFront, not Cloudflare.
+
+CloudFront only populates `CloudFront-Viewer-*` headers when a policy asks
+for them, so the default behavior uses cache policy
+`art-caching-optimized-viewer-country` (`9d91c828-d53e-4b3a-acbe-b98272eb9e30`,
+mirrored in `infra/cache-policy.json`) rather than the managed
+CachingOptimized policy. It is CachingOptimized plus that one header, which
+means the header is part of the cache key and pages cache per country.
+Reverting to a policy without the header silently makes the banner show to
+everyone again, because the function has no country to copy.
 
 ## Migration history
 
