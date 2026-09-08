@@ -1,0 +1,99 @@
+---
+/* Analytics consent banner. Shown only to visitors in regions that require
+ * opt-in consent; consent.js decides and binds the buttons. */
+---
+
+<div
+  id="consent-banner"
+  hidden
+  aria-hidden="true"
+  role="dialog"
+  aria-labelledby="consent-title"
+  aria-describedby="consent-desc"
+  class="consent"
+>
+  <div class="consent-card">
+    <p id="consent-title" class="consent-title">Cookie preferences</p>
+    <p id="consent-desc" class="consent-desc">
+      We use Google Analytics to understand aggregate site usage. Accept to
+      enable analytics cookies, or reject to continue without them.
+      <a href="https://jamestannahill.com/privacy">Privacy Policy</a>
+    </p>
+    <div class="consent-actions">
+      <button id="consent-accept" type="button" class="consent-btn consent-btn-accept">
+        Accept
+      </button>
+      <button id="consent-reject" type="button" class="consent-btn consent-btn-reject">
+        Reject
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .consent {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding: 0 1rem 1rem;
+  }
+
+  .consent-card {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 1rem 1.25rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .consent-title {
+    margin: 0 0 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-fg);
+  }
+
+  .consent-desc {
+    margin: 0 0 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+
+  .consent-desc a {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .consent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .consent-btn {
+    min-height: 44px;
+    padding: 0.5rem 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .consent-btn-accept {
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .consent-btn-reject {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+  }
+</style>

@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import { getCollection } from "astro:content";
+import ConsentBanner from "../components/ConsentBanner.astro";
 
 interface Props {
   title: string;
@@ -88,6 +89,8 @@ if (socialMeta && !resolvedOgImage) {
       </>
     )}
     <ClientRouter />
+    <script src="/scripts/analytics.js" defer></script>
+    <script src="/scripts/consent.js" defer></script>
     <slot name="head" />
   </head>
   <body>
@@ -477,5 +480,6 @@ if (socialMeta && !resolvedOgImage) {
       .ftr-sub-msg.err { color: #ff8b8b; }
       .ftr-meta { margin: 0; }
     </style>
+    <ConsentBanner />
   </body>
 </html>
