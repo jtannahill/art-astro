@@ -28,9 +28,21 @@
     return EU.has(country.toUpperCase());
   }
 
+  // Set by the art-viewer-country-cookie CloudFront Function from
+  // CloudFront-Viewer-Country. This site is not behind Cloudflare, so
+  // /cdn-cgi/trace does not exist here; it stays only as a fallback for
+  // any origin that does serve it.
+  function countryFromCookie() {
+    var match = document.cookie.match(/(?:^|;\s*)jt_country=([A-Za-z]{2})(?:;|$)/);
+    return match ? match[1] : null;
+  }
+
   function detectCountry() {
+    var cookie = countryFromCookie();
+    if (cookie) return Promise.resolve(cookie);
+
     return fetch('/cdn-cgi/trace', { credentials: 'same-origin' })
-      .then(function (res) { return res.text(); })
+      .then(function (res) { return res.ok ? res.text() : ''; })
       .then(function (body) {
         var match = body.match(/loc=([A-Z]{2})/);
         return match ? match[1] : null;
