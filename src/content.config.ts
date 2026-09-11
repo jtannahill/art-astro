@@ -55,6 +55,10 @@ export const collections = {
       parser: (text) =>
         JSON.parse(text).map((row: Record<string, unknown>) => ({
           ...row,
+          // The first 2026-03-16 pieces predate run_id; the legacy site
+          // published them under /weather/{date}/{slug}/, so keep that URL
+          // instead of emitting /weather//{slug}/ links.
+          run_id: row.run_id || row.date,
           id: `${row.pk}_${row.sk}`,
         })),
     }),
