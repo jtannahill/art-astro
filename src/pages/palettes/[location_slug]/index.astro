@@ -6,6 +6,7 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../../layouts/Base.astro";
+import { paletteDisplayName, paletteSeoDescription, paletteSeoTitle } from "../../../lib/seo.ts";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const all = await getCollection("palettes");
@@ -27,7 +28,7 @@ if (samples.length === 0) {
 }
 
 const PROD = "https://art.jamestannahill.com";
-const display = (location_slug ?? "").replace(/-/g, " ");
+const display = paletteDisplayName(location_slug ?? "");
 const latest = samples[0];
 
 function fmtCoords(lat?: number, lng?: number) {
@@ -39,8 +40,8 @@ function fmtCoords(lat?: number, lng?: number) {
 ---
 
 <Base
-  title={`${display} palette - art.jt`}
-  description={`Sentinel-2 color samples from ${display}. ${samples.length} samples archived.`}
+  title={paletteSeoTitle(location_slug ?? "")}
+  description={paletteSeoDescription(location_slug ?? "", samples.length)}
   canonicalPath={`/palettes/${location_slug}/`}
 >
   <nav class="crumbs">

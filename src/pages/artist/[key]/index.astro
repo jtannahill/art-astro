@@ -5,6 +5,7 @@ import Base from "../../../layouts/Base.astro";
 import Methodology from "../../../components/Methodology.astro";
 import Thumb from "../../../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY, LORA_METHODOLOGY } from "../../../data/artists.ts";
+import { artistSeoTitle } from "../../../lib/seo.ts";
 
 export const getStaticPaths: GetStaticPaths = () =>
   ARTISTS.map((a) => ({ params: { key: a.key } }));
@@ -38,7 +39,7 @@ function fmtSlug(slug: string) {
 ---
 
 <Base
-  title={`${artist.display} - art.jt`}
+  title={artistSeoTitle(artist.display, pieces.length)}
   description={`Generative weather art through the lens of ${artist.display}. ${pieces.length} pieces in the archive.`}
   canonicalPath={`/artist/${key}/`}
 >

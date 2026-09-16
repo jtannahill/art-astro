@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { ARTISTS, hasLora } from "../../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../../data/counts.ts";
+import { artistIndexTitle } from "../../lib/seo.ts";
 
 const all = await getCollection("weather");
 
@@ -41,7 +42,7 @@ const collectionLd = {
 ---
 
 <Base
-  title="Artists - art.jt"
+  title={artistIndexTitle(TOTAL_ARTISTS)}
   description={`${TOTAL_ARTISTS} artistic lenses interpreting the same atmospheric data. ${LORA_ARTIST_COUNT} with custom FLUX.1-dev LoRA fine-tunes.`}
 >
   <Fragment slot="head">

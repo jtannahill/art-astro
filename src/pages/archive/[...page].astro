@@ -114,8 +114,9 @@ const collectionLd = {
 ---
 
 <Base
-  title={`Archive page ${page.currentPage} - art.jt`}
+  title={page.currentPage === 1 ? "Weather Art Archive | art.jt" : `Archive page ${page.currentPage} - art.jt`}
   description={`Browse ${totalRuns} weather-driven generations across the full archive. Page ${page.currentPage} of ${page.lastPage}.`}
+  robots={page.currentPage > 1 ? "noindex, follow" : undefined}
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(collectionLd)} />

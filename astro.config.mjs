@@ -3,6 +3,7 @@ import sitemap from '@astrojs/sitemap';
 import mdx from '@astrojs/mdx';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { shouldIncludeInSitemap } from './sitemap-policy.mjs';
 
 // Per-URL lastmod for the sitemap. Looked up from the build-time data
 // snapshot. Falls back to today's date if a URL isn't tracked.
@@ -49,6 +50,8 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
+      filter: shouldIncludeInSitemap,
+      customPages: ['https://art.jamestannahill.com/api/'],
       serialize(item) {
         item.lastmod = lastmodForUrl(item.url);
         return item;

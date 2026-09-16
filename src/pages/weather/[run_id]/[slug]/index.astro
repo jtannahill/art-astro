@@ -3,6 +3,13 @@ import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../../../layouts/Base.astro";
 import { ARTISTS_BY_KEY } from "../../../../data/artists.ts";
+import {
+  pieceH1,
+  pieceMetaDescription,
+  pieceSeoTitle,
+  placeFromSlug,
+  sanitizeRationale,
+} from "../../../../lib/seo.ts";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const all = await getCollection("weather");
@@ -30,13 +37,6 @@ const svgUrl = `${assetBase}/artwork.svg`;
 const artist = ARTISTS_BY_KEY[piece.artist];
 const artistName = artist?.display ?? piece.artist.replace(/_/g, " ");
 
-function pretty(slug: string) {
-  return slug
-    .split("-")
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-}
-
 function coords(lat?: number, lng?: number) {
   if (lat == null || lng == null) return "";
   const ns = lat >= 0 ? "N" : "S";
@@ -44,19 +44,19 @@ function coords(lat?: number, lng?: number) {
   return `${Math.abs(lat).toFixed(0)}°${ns}, ${Math.abs(lng).toFixed(0)}°${ew}`;
 }
 
-const title = pretty(piece.slug);
-const description =
-  piece.rationale && piece.rationale.length > 0
-    ? piece.rationale.slice(0, 200) + (piece.rationale.length > 200 ? "..." : "")
-    : `Generative weather art at ${title} on ${piece.date}.`;
+const place = placeFromSlug(piece.slug);
+const title = pieceH1(piece.slug);
+const rationale = sanitizeRationale(piece.rationale || "");
+const description = pieceMetaDescription(rationale, artistName, piece.slug, piece.date);
+const seoTitle = pieceSeoTitle(artistName, piece.slug, piece.date);
 
 const [w, h] = (piece.canvas_format || "2048x2048").split("x");
 
 const visualArtwork = {
   "@context": "https://schema.org",
   "@type": "VisualArtwork",
-  name: `${title} - ${piece.date}`,
-  description: piece.rationale,
+  name: `${title} weather art after ${artistName} — ${piece.date}`,
+  description: rationale || description,
   url: `${PROD}/weather/${piece.run_id}/${piece.slug}/`,
   image: previewUrl,
   dateCreated: piece.created_at || piece.date,
@@ -90,7 +90,7 @@ const breadcrumb = {
   "@type": "BreadcrumbList",
   itemListElement: [
     { "@type": "ListItem", position: 1, name: "Home", item: `${PROD}/` },
-    { "@type": "ListItem", position: 2, name: "Archive", item: `${PROD}/weather/` },
+    { "@type": "ListItem", position: 2, name: "Archive", item: `${PROD}/archive/` },
     {
       "@type": "ListItem",
       position: 3,
@@ -123,12 +123,12 @@ const TIPS = {
 
 {/* socialMeta={false}: this page emits its own og:/twitter: tags below —
     the Base defaults would duplicate them. */}
-<Base title={`${title} - ${piece.date} - art.jt`} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`} socialMeta={false}>
+<Base title={seoTitle} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`} socialMeta={false}>
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(visualArtwork)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumb)} />
     <meta property="og:type" content="article" />
-    <meta property="og:title" content={`${title} - Weather Art - ${piece.date}`} />
+    <meta property="og:title" content={seoTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={`${PROD}/weather/${piece.run_id}/${piece.slug}/`} />
     <meta property="og:site_name" content="art.jt" />
@@ -174,7 +174,7 @@ const TIPS = {
       />
       <img
         src={previewUrl}
-        alt={`${piece.slug} weather artwork`}
+        alt={`${title} weather art after ${artistName}`}
         loading="eager"
         fetchpriority="high"
         decoding="async"
@@ -211,7 +211,7 @@ const TIPS = {
   {piece.rationale && (
     <section class="rationale">
       <h2>Creative Rationale</h2>
-      <p>{piece.rationale}</p>
+      <p>{rationale}</p>
     </section>
   )}
 
@@ -221,7 +221,7 @@ const TIPS = {
       <dt>Date</dt>
       <dd>{piece.date}</dd>
       <dt>Location</dt>
-      <dd>{coords(piece.lat, piece.lng)} ({title})</dd>
+      <dd>{coords(piece.lat, piece.lng)}{place.coords ? ` (${place.region})` : ` (${title})`}</dd>
       {piece.pressure != null && (
         <>
           <dt><span title={TIPS.pressure}>Pressure</span></dt>

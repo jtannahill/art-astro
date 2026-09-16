@@ -2,6 +2,7 @@ import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
 import { ARTISTS_BY_KEY } from "../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
+import { pieceH1, pieceSeoTitle, sanitizeRationale } from "../lib/seo.ts";
 
 export async function GET(context: { site: URL | undefined }) {
   const site = context.site?.toString() ?? "https://art.jamestannahill.com/";
@@ -22,20 +23,21 @@ export async function GET(context: { site: URL | undefined }) {
     items: items.map((w) => {
       const artistName =
         ARTISTS_BY_KEY[w.data.artist]?.display ?? w.data.artist.replace(/_/g, " ");
-      const title = w.data.slug
-        .split("-")
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-        .join(" ");
+      const title = pieceH1(w.data.slug);
       const previewUrl = `https://art.jamestannahill.com/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`;
       const rationale =
-        w.data.rationale || `Generative weather art at ${title} on ${w.data.date}.`;
+        sanitizeRationale(w.data.rationale) ||
+        `Generative weather art at ${title} on ${w.data.date}.`;
       // <description> stays plain text so aggregators that template the
       // description field verbatim (dlvr.it, etc.) produce clean social
       // posts. Full HTML (inline image) goes in <content:encoded>, which
       // proper feed readers prefer.
       const richContent = `<p><img src="${previewUrl}" alt="${title} - ${artistName}" style="max-width:100%;height:auto;border-radius:6px;" /></p><p>${rationale}</p>`;
       return {
-        title: `${title} - ${artistName}`,
+        title: pieceSeoTitle(artistName, w.data.slug, w.data.date).replace(
+          /\s*\|\s*art\.jt$/,
+          "",
+        ),
         link: `/weather/${w.data.run_id}/${w.data.slug}/`,
         pubDate: new Date(w.data.created_at || w.data.date || Date.now()),
         description: rationale,

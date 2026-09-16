@@ -6,6 +6,7 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { SATELLITE_ALTITUDE_KM } from "../../data/counts.ts";
+import { paletteDisplayName, palettesIndexTitle } from "../../lib/seo.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const all = await getCollection("palettes");
@@ -28,7 +29,7 @@ const palettes = [...latestPerLocation.values()]
   }));
 
 function fmtSlug(s: string) {
-  return s.replace(/-/g, " ");
+  return paletteDisplayName(s);
 }
 
 const collectionLd = {
@@ -42,8 +43,8 @@ const collectionLd = {
 ---
 
 <Base
-  title="Satellite Color Palettes - art.jt"
-  description={`Color palettes extracted from Copernicus Sentinel-2 satellite imagery - Earth's real colors as seen from ${SATELLITE_ALTITUDE_KM} km above.`}
+  title={palettesIndexTitle()}
+  description={`Color palettes extracted from Copernicus Sentinel-2 satellite imagery — Earth's real colors as seen from ${SATELLITE_ALTITUDE_KM} km above.`}
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(collectionLd)} />

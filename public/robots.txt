@@ -11,4 +11,9 @@ Allow: /
 Disallow: /weather/*/metadata.json
 Disallow: /palettes/*/metadata.json
 
+# Thin utilities: keep crawl budget for hubs + recent pieces.
+Disallow: /search/
+Disallow: /studies/
+Disallow: /archive/*/
+
 Sitemap: https://art.jamestannahill.com/sitemap-index.xml

@@ -11,7 +11,8 @@
     "build:no-pull": "astro build && npm run index-search",
     "index-search": "pagefind --site dist --output-subdir _pagefind",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "tsx --test src/lib/seo.test.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
