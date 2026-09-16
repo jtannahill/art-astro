@@ -230,5 +230,12 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
     border: 1px solid #1f1f1f;
     overflow: hidden;
     background: #0a0a0a;
+    touch-action: none;
+  }
+  @media (max-width: 720px) {
+    .map {
+      height: calc(100svh - 14rem);
+      min-height: 320px;
+    }
   }
 </style>

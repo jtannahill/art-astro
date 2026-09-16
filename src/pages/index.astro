@@ -11,6 +11,7 @@ import Base from "../layouts/Base.astro";
 import Thumb from "../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
+import { placeFromSlug } from "../lib/seo.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
@@ -114,12 +115,30 @@ const websiteLd = {
         href={`${heroBase}/preview-960.webp`}
         type="image/webp"
         imagesrcset={`${heroBase}/preview-480.webp 480w, ${heroBase}/preview-960.webp 960w, ${heroBase}/preview-1920.webp 1920w`}
-        imagesizes="(max-width: 540px) 50vw, (max-width: 900px) 33vw, 240px"
+        imagesizes="(max-width: 720px) 100vw, 720px"
       />
     )}
   </Fragment>
 
   <h1>Today's Weather Art</h1>
+
+  {heroPiece && heroBase && (
+    <a class="hero-piece" href={`/weather/${heroPiece.run_id}/${heroPiece.slug}/`}>
+      <Thumb
+        base={heroBase}
+        alt={`${placeFromSlug(heroPiece.slug).region} weather art after ${fmtArtist(heroPiece.artist)}`}
+        loading="eager"
+        fetchpriority="high"
+        sizes="(max-width: 720px) 100vw, 720px"
+        viewTransitionName={`art-${heroPiece.run_id.replace(/-/g, "")}-${heroPiece.slug.replace(/-/g, "")}`}
+      />
+      <div class="hero-cap">
+        <strong>{placeFromSlug(heroPiece.slug).region}</strong>
+        <span>{fmtArtist(heroPiece.artist)}</span>
+        {heroPiece.temp != null && <span>{heroPiece.temp.toFixed(1)}°C</span>}
+      </div>
+    </a>
+  )}
 
   <div class="artist-bar">
     <label for="artist-select">Style</label>
@@ -189,9 +208,8 @@ const websiteLd = {
           <Thumb
             base={`${PROD}/weather/${p.run_id}/${p.slug}`}
             alt={`${p.slug} weather art`}
-            loading={i === 0 ? "eager" : "lazy"}
-            fetchpriority={i === 0 ? "high" : undefined}
-            viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
+            loading={heroPiece && i === 0 ? "lazy" : i === 0 ? "eager" : "lazy"}
+            viewTransitionName={heroPiece && i === 0 ? undefined : `art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
           />
           <div class="card-body">
             <h3>{fmtSlug(p.slug)}</h3>
@@ -295,6 +313,29 @@ const websiteLd = {
 
 <style>
   h1 { font-size: 2rem; margin: 0 0 1.25rem; letter-spacing: -0.02em; }
+  @media (max-width: 720px) {
+    h1 { font-size: 1.65rem; margin-bottom: 0.85rem; }
+  }
+
+  .hero-piece {
+    display: block;
+    margin: 0 0 1.25rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #1f1f1f;
+    background: #0a0a0a;
+    color: inherit;
+  }
+  .hero-piece:hover { text-decoration: none; border-color: #333; }
+  .hero-cap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.85rem;
+    padding: 0.7rem 0.9rem 0.8rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+  }
+  .hero-cap strong { color: #fff; font-weight: 600; }
   h2 { font-size: 1.1rem; margin: 3rem 0 1rem; letter-spacing: -0.01em; }
   h3 { font-size: 0.9rem; margin: 0 0 0.25rem; color: #fff; text-transform: capitalize; }
 
@@ -349,6 +390,7 @@ const websiteLd = {
   .artist-bar select {
     flex: 1;
     min-width: 160px;
+    min-height: 44px;
     background: transparent;
     color: #fff;
     border: none;
@@ -368,6 +410,7 @@ const websiteLd = {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    min-height: 44px;
     padding: 0.65rem 1.5rem;
     background: linear-gradient(135deg, #2a2218, #1a1814);
     border: 1px solid #c9a66b33;
@@ -467,7 +510,9 @@ const websiteLd = {
     text-align: center;
   }
   .archive-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     padding: 0.55rem 1.25rem;
     border: 1px solid #2a2a2a;
     border-radius: 6px;
@@ -478,7 +523,7 @@ const websiteLd = {
 
   .toast {
     position: fixed;
-    bottom: 1.5rem;
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%) translateY(20px);
     padding: 0.75rem 1.25rem;
@@ -500,6 +545,8 @@ const websiteLd = {
   @media (max-width: 768px) {
     .artist-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
     .artist-bar label { display: none; }
-    .gen-btn { justify-content: center; }
+    .gen-btn { justify-content: center; width: 100%; }
+    .artist-link { min-height: 44px; display: inline-flex; align-items: center; }
+    .grid { grid-template-columns: 1fr; }
   }
 </style>

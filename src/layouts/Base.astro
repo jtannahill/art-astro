@@ -61,7 +61,7 @@ if (socialMeta && !resolvedOgImage) {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -99,24 +99,34 @@ if (socialMeta && !resolvedOgImage) {
   </head>
   <body>
     <header class="hdr">
-      <a href={import.meta.env.BASE_URL}>
+      <a class="hdr-home" href={import.meta.env.BASE_URL}>
         <span class="hdr-mark">art.jt</span>
       </a>
-      <nav class="top-nav">
+      <nav class="top-nav" id="site-nav">
         <a href="/archive/">Archive</a>
         <a href="/artist/">Artists</a>
         <a href="/palettes/">Palettes</a>
         <a href="/map/">Map</a>
         <a href="/about/">About</a>
-        <button class="nav-search-trigger" type="button" data-search-trigger aria-label="Search" title="Search (⌘K)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3-3" />
-          </svg>
-          <span class="nav-search-text">Search</span>
-          <kbd class="nav-search-kbd">⌘K</kbd>
-        </button>
       </nav>
+      <button class="nav-search-trigger" type="button" data-search-trigger aria-label="Search" title="Search (⌘K)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3-3" />
+        </svg>
+        <span class="nav-search-text">Search</span>
+        <kbd class="nav-search-kbd">⌘K</kbd>
+      </button>
+      <button
+        class="nav-toggle"
+        type="button"
+        data-nav-toggle
+        aria-expanded="false"
+        aria-controls="site-nav"
+        aria-label="Open menu"
+      >
+        <span></span><span></span><span></span>
+      </button>
     </header>
     <main>
       <slot />
@@ -275,6 +285,22 @@ if (socialMeta && !resolvedOgImage) {
         }
 
         document.addEventListener("click", (e) => {
+          const hdr = document.querySelector(".hdr");
+          const toggle = e.target.closest("[data-nav-toggle]");
+          if (toggle && hdr) {
+            const openNav = hdr.classList.toggle("nav-open");
+            toggle.setAttribute("aria-expanded", openNav ? "true" : "false");
+            toggle.setAttribute("aria-label", openNav ? "Close menu" : "Open menu");
+            return;
+          }
+          if (e.target.closest("#site-nav a") && hdr) {
+            hdr.classList.remove("nav-open");
+            const t = hdr.querySelector("[data-nav-toggle]");
+            if (t) {
+              t.setAttribute("aria-expanded", "false");
+              t.setAttribute("aria-label", "Open menu");
+            }
+          }
           const trigger = e.target.closest("[data-search-trigger]");
           if (trigger) { e.preventDefault(); open(); return; }
           if (e.target.closest("[data-search-close]")) { close(); return; }
@@ -283,6 +309,17 @@ if (socialMeta && !resolvedOgImage) {
           const isCmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
           if (isCmdK) { e.preventDefault(); modal.hidden ? open() : close(); }
           else if (e.key === "Escape" && !modal.hidden) close();
+          else if (e.key === "Escape") {
+            const hdr = document.querySelector(".hdr");
+            if (hdr?.classList.contains("nav-open")) {
+              hdr.classList.remove("nav-open");
+              const t = hdr.querySelector("[data-nav-toggle]");
+              if (t) {
+                t.setAttribute("aria-expanded", "false");
+                t.setAttribute("aria-label", "Open menu");
+              }
+            }
+          }
           else if (e.key === "/" && modal.hidden) {
             // "/" opens search - but only when the user isn't typing in a field
             const ae = document.activeElement;
@@ -300,29 +337,69 @@ if (socialMeta && !resolvedOgImage) {
         z-index: 50;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        gap: 0.75rem;
         padding: 0.75rem 1.5rem;
+        padding-top: max(0.75rem, env(safe-area-inset-top));
         background: rgba(10, 10, 15, 0.85);
         backdrop-filter: saturate(180%) blur(10px);
         -webkit-backdrop-filter: saturate(180%) blur(10px);
         border-bottom: 1px solid var(--color-border);
       }
-      .hdr a { color: var(--color-fg); font-family: var(--font-mono); font-size: 0.9rem; }
-      .top-nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+      .hdr-home {
+        color: var(--color-fg);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        margin-right: auto;
+      }
+      .top-nav { display: flex; gap: 0.25rem 0.15rem; flex-wrap: wrap; align-items: center; }
       .top-nav a {
         color: var(--color-muted);
         font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         text-decoration: none;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 0.55rem;
       }
       .top-nav a:hover { color: var(--color-link); }
+
+      .nav-toggle {
+        display: none;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1px solid #2a2a3e;
+        border-radius: 8px;
+        background: #141428;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        cursor: pointer;
+      }
+      .nav-toggle span {
+        display: block;
+        width: 16px;
+        height: 1.5px;
+        background: var(--color-fg);
+        transition: transform 0.15s, opacity 0.15s;
+      }
+      .hdr.nav-open .nav-toggle span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+      .hdr.nav-open .nav-toggle span:nth-child(2) { opacity: 0; }
+      .hdr.nav-open .nav-toggle span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
       .nav-search-trigger {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.5rem;
-        padding: 0.3rem 0.65rem 0.3rem 0.55rem;
+        min-height: 44px;
+        padding: 0 0.75rem 0 0.65rem;
         background: #141428;
         border: 1px solid #2a2a3e;
         border-radius: 999px;
@@ -350,12 +427,40 @@ if (socialMeta && !resolvedOgImage) {
         color: var(--color-muted);
         letter-spacing: 0;
       }
-      @media (max-width: 520px) {
-        .hdr { flex-wrap: wrap; gap: 0.5rem 0.75rem; padding: 0.6rem 1rem; }
-        .top-nav { gap: 0.6rem; }
-        .top-nav a { font-size: 0.7rem; }
+      @media (max-width: 720px) {
+        .hdr {
+          display: grid;
+          grid-template-columns: 1fr auto auto;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.4rem 1rem;
+          padding-top: max(0.4rem, env(safe-area-inset-top));
+        }
+        .hdr-home { margin-right: 0; grid-column: 1; grid-row: 1; }
+        .nav-search-trigger { grid-column: 2; grid-row: 1; }
+        .nav-toggle { display: inline-flex; grid-column: 3; grid-row: 1; }
+        .top-nav { grid-row: 2; }
         .nav-search-text, .nav-search-kbd { display: none; }
-        .nav-search-trigger { padding: 0.3rem; }
+        .nav-search-trigger {
+          width: 44px;
+          padding: 0;
+          border-radius: 8px;
+        }
+        .top-nav {
+          display: none;
+          grid-column: 1 / -1;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0;
+          padding: 0.25rem 0 0.5rem;
+        }
+        .hdr.nav-open .top-nav { display: flex; }
+        .top-nav a {
+          font-size: 0.9rem;
+          letter-spacing: 0.08em;
+          padding: 0 0.25rem;
+          border-top: 1px solid #1c1c28;
+        }
       }
 
       .search-modal {
@@ -388,15 +493,17 @@ if (socialMeta && !resolvedOgImage) {
       }
       .search-close {
         position: absolute;
-        top: 0.5rem;
-        right: 0.65rem;
+        top: 0.35rem;
+        right: 0.35rem;
         background: none;
         border: none;
         color: var(--color-muted);
         font-size: 1.5rem;
         cursor: pointer;
         line-height: 1;
-        padding: 0.2rem 0.5rem;
+        width: 44px;
+        height: 44px;
+        padding: 0;
       }
       .search-close:hover { color: #fff; }
 
@@ -422,10 +529,14 @@ if (socialMeta && !resolvedOgImage) {
         margin: 0 auto;
         padding: 3rem 1.5rem;
       }
+      @media (max-width: 720px) {
+        main { padding: 1.5rem 1rem 2.5rem; }
+      }
       .ftr {
         max-width: 720px;
         margin: 6rem auto 2rem;
         padding: 1.5rem;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
         border-top: 1px solid var(--color-border);
         font-size: 0.8rem;
         color: var(--color-muted);
@@ -447,25 +558,34 @@ if (socialMeta && !resolvedOgImage) {
       .ftr-subscribe input[type="email"] {
         flex: 1 1 220px;
         min-width: 0;
+        min-height: 44px;
         background: #0e0e1a;
         border: 1px solid #2a2a3e;
         color: var(--color-fg);
         font: inherit;
-        padding: 0.45rem 0.7rem;
+        font-size: 1rem;
+        padding: 0.55rem 0.75rem;
         border-radius: 6px;
         outline: none;
       }
       .ftr-subscribe input[type="email"]:focus {
         border-color: var(--color-accent);
       }
+      .ftr-meta a {
+        display: inline-block;
+        padding: 0.35rem 0.15rem;
+        min-height: 44px;
+        line-height: 44px;
+      }
       .ftr-subscribe button {
-        padding: 0.45rem 0.95rem;
+        min-height: 44px;
+        padding: 0.45rem 1rem;
         background: linear-gradient(135deg, #2a2218, #1a1814);
         border: 1px solid #c9a66b44;
         border-radius: 6px;
         color: var(--color-accent);
         font: inherit;
-        font-size: 0.78rem;
+        font-size: 0.9rem;
         cursor: pointer;
         transition: border-color 0.15s, background 0.15s;
       }

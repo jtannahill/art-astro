@@ -390,10 +390,13 @@ const faqSchema = {
     letter-spacing: 0.5px;
     text-decoration: none;
     transition: color 0.2s;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
   .about-nav a:hover { color: var(--color-accent); }
   @media (max-width: 768px) {
-    .about-nav { gap: 1rem; }
+    .about-nav { gap: 0.35rem 0.75rem; }
     .about-nav a { font-size: 0.8rem; }
   }
 

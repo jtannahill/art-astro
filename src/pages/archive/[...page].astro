@@ -325,12 +325,13 @@ const collectionLd = {
     margin-bottom: 0.85rem;
   }
   .chip {
-    padding: 0.3rem 0.7rem;
+    min-height: 44px;
+    padding: 0.45rem 0.85rem;
     background: #181818;
     color: #ccc;
     border: 1px solid #2a2a2a;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
@@ -367,7 +368,10 @@ const collectionLd = {
     font-size: 0.85rem;
   }
   .pager a {
-    padding: 0.4rem 0.8rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
     border: 1px solid #2a2a2a;
     border-radius: 6px;
     color: var(--color-link);
