@@ -353,6 +353,14 @@ const TIPS = {
       overlay.addEventListener("click", close);
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && drawer.classList.contains("open")) close();
+        // Keep Tab inside the open drawer.
+        if (e.key === "Tab" && drawer.classList.contains("open")) {
+          const f = [...drawer.querySelectorAll("button:not([disabled]), a[href]")].filter((el) => el.offsetParent !== null);
+          if (!f.length) return;
+          const first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
       });
 
       function loadEditions() {

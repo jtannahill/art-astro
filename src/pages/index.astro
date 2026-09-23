@@ -140,21 +140,6 @@ const websiteLd = {
     </a>
   )}
 
-  <div class="artist-bar">
-    <label for="artist-select">Style</label>
-    <select id="artist-select" data-artist-bar>
-      {dropdownArtists.map((a) => (
-        <option value={a.key} data-link={a.link} selected={a.key === heroPiece?.artist}>{a.display}</option>
-      ))}
-    </select>
-    <button class="gen-btn" data-gen-btn>
-      <span class="spinner"></span>
-      Generate
-    </button>
-    <a id="artist-link" href={dropdownArtists[0].link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
-  </div>
-  <div class="gen-check cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="compact"></div>
-  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
   {/* Plain-English weather → art map. Same data the model gets, in
        human terms - so a visitor immediately understands why a piece
@@ -229,6 +214,23 @@ const websiteLd = {
   <div class="more-cta">
     <a href="/archive/" class="archive-link">Browse the full archive →</a>
   </div>
+
+  <h2 class="gen-h">Generate a new run</h2>
+  <div class="artist-bar">
+    <label for="artist-select">Style</label>
+    <select id="artist-select" data-artist-bar>
+      {dropdownArtists.map((a) => (
+        <option value={a.key} data-link={a.link} selected={a.key === heroPiece?.artist}>{a.display}</option>
+      ))}
+    </select>
+    <button class="gen-btn" data-gen-btn>
+      <span class="spinner"></span>
+      Generate
+    </button>
+    <a id="artist-link" href={dropdownArtists[0].link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
+  </div>
+  <div class="gen-check cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="compact"></div>
+  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
   <h2>Latest palettes</h2>
   {latestPalettes.length === 0 ? (
@@ -368,6 +370,7 @@ const websiteLd = {
   .how-grid .ax { color: var(--color-accent); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
   .how-grid .copy { color: var(--color-muted); font-size: 0.8rem; line-height: 1.5; margin-top: 0.15rem; }
   .todays-h { margin-top: 3rem; }
+  .gen-h { margin-top: 3rem; }
   .empty { color: var(--color-muted); padding: 2rem 0; }
 
   .artist-bar {

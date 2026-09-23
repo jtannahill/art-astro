@@ -42,9 +42,8 @@ const png = `${base}/preview-2048.png`;
 const webp480 = `${base}/preview-480.webp`;
 const webp960 = `${base}/preview-960.webp`;
 const webp1920 = `${base}/preview-1920.webp`;
-const styleAttr = viewTransitionName
-  ? `view-transition-name: ${viewTransitionName};`
-  : undefined;
+// The name is applied only to the thumb that is clicked (see Base.astro), so a
+// grid of 80 thumbs does not snapshot 80 elements on every navigation.
 ---
 
 <picture class={square ? "thumb-pic square" : "thumb-pic"}>
@@ -61,7 +60,7 @@ const styleAttr = viewTransitionName
     decoding="async"
     width="1024"
     height="1024"
-    style={styleAttr}
+    data-vt={viewTransitionName}
   />
 </picture>
 
