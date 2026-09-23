@@ -338,6 +338,7 @@ const TIPS = {
         overlay.classList.add("open");
         drawer.classList.add("open");
         drawer.inert = false;
+        document.documentElement.style.overflow = "hidden";
         drawer.querySelector("[data-drawer-close]").focus();
         if (!editionsLoaded) loadEditions();
       }
@@ -345,6 +346,7 @@ const TIPS = {
         overlay.classList.remove("open");
         drawer.classList.remove("open");
         drawer.inert = true;
+        document.documentElement.style.overflow = "";
         if (opener && opener.focus) opener.focus();
       }
 
@@ -576,6 +578,12 @@ const TIPS = {
     padding: 1.5rem;
   }
   .drawer.open { transform: translateX(0); }
+  .drawer { overscroll-behavior: contain; }
+  @media (prefers-reduced-motion: reduce) {
+    .drawer, .drawer.open { transform: none !important; }
+    .drawer { opacity: 0; pointer-events: none; transition: opacity 200ms ease !important; }
+    .drawer.open { opacity: 1; pointer-events: auto; }
+  }
   .drawer:not(.open) { transition-duration: 0.2s; }
   .drawer-close {
     position: absolute;
@@ -616,6 +624,7 @@ const TIPS = {
     color: var(--color-accent);
     border-radius: 6px;
     padding: 0.3rem 0.8rem;
+    min-height: 44px;
     font: inherit;
     font-size: 0.8rem;
     cursor: pointer;

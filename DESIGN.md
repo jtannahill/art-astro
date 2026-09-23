@@ -86,3 +86,8 @@ The site ships one dark theme. There is no light theme and no `prefers-color-sch
 - Focus indication relies on browser default rings; no custom focus-visible style is defined, and whether one should exist is open.
 - Headings are meant to be sentence case, but several titles and card headings apply `text-transform: capitalize` to generated slugs. The intended casing rule for generated names is unresolved.
 - The print drawer relies on `inert` and focus placement but has no Tab trap like the search dialog; whether it needs one is open.
+
+## Motion and feedback (apple-design pass, 2026-09-23)
+
+- Modal sheets (print drawer, search) lock page scroll while open. Under reduced motion the drawer cross-fades instead of sliding.
+- h1 and h2 use display leading (1.15, 1.3). The header and search backdrop go solid under `prefers-reduced-transparency`.

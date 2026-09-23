@@ -342,6 +342,8 @@ const collectionLd = {
     transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
   .chip:hover { border-color: #444; }
+  .chip:active { transform: scale(0.97); }
+  .card:active { transform: scale(0.98); transition-duration: 100ms; }
   .chip.active {
     background: #1a1a2e;
     border-color: var(--color-accent);
@@ -357,6 +359,7 @@ const collectionLd = {
   }
   .slider-row input[type="range"] {
     flex: 0 0 160px;
+    min-height: 44px;
     accent-color: var(--color-accent);
   }
   .slider-val { color: #fff; font-family: var(--font-mono); min-width: 1.5em; }

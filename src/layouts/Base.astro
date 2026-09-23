@@ -287,6 +287,7 @@ if (socialMeta && !resolvedOgImage) {
         async function open() {
           opener = document.activeElement;
           modal.hidden = false;
+          document.documentElement.style.overflow = "hidden";
           await mount();
           // Focus the input once mounted
           const input = modal.querySelector(".pagefind-ui__search-input");
@@ -294,6 +295,7 @@ if (socialMeta && !resolvedOgImage) {
         }
         function close() {
           modal.hidden = true;
+          document.documentElement.style.overflow = "";
           if (opener && opener.focus) opener.focus();
         }
         // Keep Tab inside the open search dialog.
