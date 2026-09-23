@@ -120,3 +120,12 @@ describe("pieceH1", () => {
     assert.equal(pieceH1("central-asia-30n-70e"), "Central Asia");
   });
 });
+
+it("pieceH1 names unnamed grid cells by their coordinates", () => {
+  assert.equal(pieceH1("region-30n-150e"), "Region 30°N, 150°E");
+  assert.equal(pieceH1("central-asia-30n-70e"), "Central Asia");
+});
+
+it("piece titles use no em-dash", () => {
+  assert.ok(!pieceSeoTitle("Sam Francis", "central-asia-30n-70e", "2026-09-23").includes("\u2014"));
+});

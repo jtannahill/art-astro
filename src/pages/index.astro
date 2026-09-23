@@ -11,7 +11,7 @@ import Base from "../layouts/Base.astro";
 import Thumb from "../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
-import { placeFromSlug } from "../lib/seo.ts";
+import { placeFromSlug, pieceH1 } from "../lib/seo.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
@@ -126,14 +126,14 @@ const websiteLd = {
     <a class="hero-piece" href={`/weather/${heroPiece.run_id}/${heroPiece.slug}/`}>
       <Thumb
         base={heroBase}
-        alt={`${placeFromSlug(heroPiece.slug).region} weather art after ${fmtArtist(heroPiece.artist)}`}
+        alt={`${pieceH1(heroPiece.slug)} weather art after ${fmtArtist(heroPiece.artist)}`}
         loading="eager"
         fetchpriority="high"
         sizes="(max-width: 720px) 100vw, 720px"
         viewTransitionName={`art-${heroPiece.run_id.replace(/-/g, "")}-${heroPiece.slug.replace(/-/g, "")}`}
       />
       <div class="hero-cap">
-        <strong>{placeFromSlug(heroPiece.slug).region}</strong>
+        <strong>{pieceH1(heroPiece.slug)}</strong>
         <span>{fmtArtist(heroPiece.artist)}</span>
         {heroPiece.temp != null && <span>{heroPiece.temp.toFixed(1)}°C</span>}
       </div>
@@ -144,7 +144,7 @@ const websiteLd = {
     <label for="artist-select">Style</label>
     <select id="artist-select" data-artist-bar>
       {dropdownArtists.map((a) => (
-        <option value={a.key} data-link={a.link}>{a.display}</option>
+        <option value={a.key} data-link={a.link} selected={a.key === heroPiece?.artist}>{a.display}</option>
       ))}
     </select>
     <button class="gen-btn" data-gen-btn>
@@ -230,7 +230,7 @@ const websiteLd = {
     <a href="/archive/" class="archive-link">Browse the full archive →</a>
   </div>
 
-  <h2>Latest Palettes</h2>
+  <h2>Latest palettes</h2>
   {latestPalettes.length === 0 ? (
     <p class="empty">No palettes available yet.</p>
   ) : (
@@ -254,7 +254,7 @@ const websiteLd = {
     </div>
   )}
 
-  <div class="toast" id="toast" data-toast></div>
+  <div class="toast" id="toast" data-toast role="status" aria-live="polite"></div>
 </Base>
 
 <script is:inline define:vars={{ TRIGGER_URL }}>
@@ -276,7 +276,8 @@ const websiteLd = {
     if (!toast) return;
     toast.textContent = msg;
     toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), ms);
+    clearTimeout(flash.t);
+    flash.t = setTimeout(() => toast.classList.remove("show"), ms);
   }
   if (btn && sel) {
     btn.addEventListener("click", () => {
@@ -305,7 +306,7 @@ const websiteLd = {
             flash("Generating new art - refresh in ~5 minutes");
           }
         })
-        .catch(() => flash("Error triggering pipeline", 3000))
+        .catch(() => flash("Unable to start generation. Check your connection and try again.", 6000))
         .finally(() => setTimeout(() => btn.classList.remove("loading"), 1200));
     });
   }
@@ -397,7 +398,6 @@ const websiteLd = {
     font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
-    outline: none;
     -webkit-appearance: none;
     appearance: none;
     padding-right: 16px;
@@ -419,13 +419,14 @@ const websiteLd = {
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 150ms ease, transform 160ms ease-out;
     white-space: nowrap;
   }
   .gen-btn:hover {
     background: linear-gradient(135deg, #3a3228, #2a2420);
     border-color: #c9a66b66;
   }
+  .gen-btn:active { transform: scale(0.97); }
   .gen-btn.loading { opacity: 0.6; pointer-events: none; }
   .spinner {
     display: none;
@@ -440,7 +441,7 @@ const websiteLd = {
   @keyframes spin { to { transform: rotate(360deg); } }
   .artist-link {
     font-size: 0.75rem;
-    color: #555;
+    color: var(--color-muted);
     transition: color 0.2s;
   }
   .artist-link:hover { color: var(--color-link); }
@@ -460,10 +461,12 @@ const websiteLd = {
     color: inherit;
     transition: transform 0.15s, border-color 0.15s;
   }
-  .card:hover {
-    transform: translateY(-2px);
-    border-color: #333;
-    text-decoration: none;
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: #333;
+      text-decoration: none;
+    }
   }
   .thumb {
     width: 100%;
@@ -544,7 +547,7 @@ const websiteLd = {
 
   @media (max-width: 768px) {
     .artist-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-    .artist-bar label { display: none; }
+    .artist-bar label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .gen-btn { justify-content: center; width: 100%; }
     .artist-link { min-height: 44px; display: inline-flex; align-items: center; }
     .grid { grid-template-columns: 1fr; }

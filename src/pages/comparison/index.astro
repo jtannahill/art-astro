@@ -75,7 +75,7 @@ const comparisons = [...cells.values()]
 ---
 
 <Base
-  title="Style Comparison - art.jt"
+  title="Style Comparison | art.jt"
   description={`See how ${TOTAL_ARTISTS} different artists interpret the same atmospheric conditions.`}
 >
   <h1>Style Comparison</h1>
@@ -103,7 +103,7 @@ const comparisons = [...cells.values()]
         <div class="row">
           {comp.pieces.map((p) => (
             <a class="cell" href={p.url}>
-              <Thumb base={p.thumb_base} alt={`${p.artist_name} interpretation`} />
+              <Thumb base={p.thumb_base} alt={p.artist_name ? `${p.artist_name} interpretation` : ""} />
               <span class="caption">{p.artist_name}</span>
             </a>
           ))}

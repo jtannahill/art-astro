@@ -60,7 +60,7 @@ const visualArtwork = {
   url: `${PROD}/weather/${piece.run_id}/${piece.slug}/`,
   image: previewUrl,
   dateCreated: piece.created_at || piece.date,
-  artMedium: `Digital - generative art from atmospheric data${piece.renderer === "flux-1.1-pro" ? " (Flux 1.1 Pro)" : " (SVG)"}`,
+  artMedium: `Digital - generative art from atmospheric data${piece.renderer === "flux-1.1-pro" ? " (Flux 1.1 Pro)" : piece.renderer?.startsWith("flux-dev-lora:") ? " (FLUX.1-dev + custom LoRA)" : " (SVG)"}`,
   artform: "Generative Art",
   artworkSurface: "Digital",
   width: { "@type": "Distance", name: `${w}px` },
@@ -188,7 +188,7 @@ const TIPS = {
   <div class="actions">
     <button class="btn primary" data-print-open>
       <span>Buy print</span>
-      <span class="sub">Limited Edition · Ships Worldwide</span>
+      <span class="sub">Limited edition, ships worldwide</span>
     </button>
     {/* Watermark Lambda 302-redirects to S3 cross-origin, which makes
          browsers ignore the `download` attribute. target="_blank" keeps
@@ -210,13 +210,13 @@ const TIPS = {
 
   {piece.rationale && (
     <section class="rationale">
-      <h2>Creative Rationale</h2>
+      <h2>Creative rationale</h2>
       <p>{rationale}</p>
     </section>
   )}
 
   <section class="meta">
-    <h2>Atmospheric Data</h2>
+    <h2>Atmospheric data</h2>
     <dl>
       <dt>Date</dt>
       <dd>{piece.date}</dd>
@@ -272,10 +272,10 @@ const TIPS = {
   </section>
 
   <section class="meta">
-    <h2>Technical Details</h2>
+    <h2>Technical details</h2>
     <dl>
       <dt>Model</dt>
-      <dd>{piece.renderer === "flux-1.1-pro" ? "Flux 1.1 Pro (Black Forest Labs)" : "Claude Sonnet 4 via Amazon Bedrock"}</dd>
+      <dd>{piece.renderer === "flux-1.1-pro" ? "Flux 1.1 Pro (Black Forest Labs)" : piece.renderer?.startsWith("flux-dev-lora:") ? "FLUX.1-dev + custom LoRA (Black Forest Labs)" : "Claude Sonnet 4 via Amazon Bedrock"}</dd>
       <dt>Artist Inspiration</dt>
       <dd><a href={`/artist/${piece.artist}/`}>{artistName}</a></dd>
       <dt>Weather Source</dt>
@@ -284,7 +284,7 @@ const TIPS = {
       <dd>
         {piece.renderer === "flux-1.1-pro" ? (
           piece.has_8k ? "PNG 8K (Flux 1.1 Pro → Real-ESRGAN 4× → Clarity 2×)" : "PNG 4K (Flux 1.1 Pro + Real-ESRGAN 4×)"
-        ) : `SVG (${piece.canvas_format} viewBox) + PNG`}
+        ) : piece.renderer?.startsWith("flux-dev-lora:") ? "PNG (FLUX.1-dev + custom LoRA)" : `SVG (${piece.canvas_format} viewBox) + PNG`}
         {piece.has_svg && piece.renderer === "flux-1.1-pro" && " + SVG vector interpretation"}
       </dd>
       <dt>Generated</dt>
@@ -304,10 +304,10 @@ const TIPS = {
        print-shop Lambda and POSTs the selected size for a Stripe Checkout
        redirect. Same flow as the legacy Jinja2 page. */}
   <div class="drawer-overlay" data-drawer-overlay></div>
-  <aside class="drawer" data-drawer aria-hidden="true">
+  <aside class="drawer" data-drawer role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
     <button class="drawer-close" data-drawer-close aria-label="Close print options">×</button>
     <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt={piece.slug} loading="lazy" decoding="async" width={w} height={h} />
-    <h3 class="drawer-title">{title}</h3>
+    <h3 class="drawer-title" id="drawer-title">{title}</h3>
     <p class="drawer-sub">{artistName} · {piece.date}</p>
     <div class="size-options" data-size-options>
       <p class="muted">Loading sizes...</p>
@@ -332,16 +332,20 @@ const TIPS = {
       let selectedSize = null;
       let editionsLoaded = false;
 
-      function open() {
+      let opener = null;
+      function open(e) {
+        opener = (e && e.currentTarget) || document.activeElement;
         overlay.classList.add("open");
         drawer.classList.add("open");
-        drawer.setAttribute("aria-hidden", "false");
+        drawer.inert = false;
+        drawer.querySelector("[data-drawer-close]").focus();
         if (!editionsLoaded) loadEditions();
       }
       function close() {
         overlay.classList.remove("open");
         drawer.classList.remove("open");
-        drawer.setAttribute("aria-hidden", "true");
+        drawer.inert = true;
+        if (opener && opener.focus) opener.focus();
       }
 
       document.querySelectorAll("[data-print-open]").forEach((b) => b.addEventListener("click", open));
@@ -373,21 +377,25 @@ const TIPS = {
               const s = (data.sizes || {})[key];
               if (!s) return;
               const soldOut = s.sold >= s.limit;
-              const div = document.createElement("div");
+              // A real button, so the size can be chosen from the keyboard.
+              const div = document.createElement("button");
+              div.type = "button";
               div.className = "size-option" + (soldOut ? " sold-out" : "");
               div.dataset.size = key;
               div.dataset.price = s.price_cents;
+              div.setAttribute("aria-pressed", "false");
+              div.disabled = soldOut;
               div.addEventListener("click", () => selectSize(key, s.price_cents));
               div.innerHTML =
-                '<div>' +
-                  '<div class="size-label">' + key + ' · ' + s.dims + '"</div>' +
-                  '<div class="size-edition">' + s.sold + ' of ' + s.limit + ' sold</div>' +
-                '</div>' +
-                '<div>' +
+                '<span>' +
+                  '<span class="size-label">' + key + ' · ' + s.dims + '"</span>' +
+                  '<span class="size-edition">' + s.sold + ' of ' + s.limit + ' sold</span>' +
+                '</span>' +
+                '<span>' +
                   (soldOut
                     ? '<span class="sold-out-badge">Sold Out</span>'
                     : '<span class="size-price">$' + (s.price_cents / 100).toFixed(0) + '</span>') +
-                '</div>';
+                '</span>';
               sizeBox.appendChild(div);
             });
           })
@@ -408,7 +416,10 @@ const TIPS = {
       function selectSize(key, priceCents) {
         selectedSize = key;
         document.querySelectorAll(".size-option").forEach((el) =>
-          el.classList.toggle("selected", el.dataset.size === key)
+          {
+            el.classList.toggle("selected", el.dataset.size === key);
+            el.setAttribute("aria-pressed", el.dataset.size === key ? "true" : "false");
+          }
         );
         checkoutBtn.disabled = false;
         checkoutBtn.textContent = "Checkout - $" + (priceCents / 100).toFixed(0);
@@ -495,7 +506,7 @@ const TIPS = {
     text-decoration: none;
     font-size: 0.85rem;
     background: #111;
-    transition: border-color 0.15s, color 0.15s;
+    transition: border-color 0.15s, color 0.15s, transform 160ms ease-out;
   }
   .btn:hover { border-color: #444; color: #fff; text-decoration: none; }
   .btn.primary {
@@ -525,7 +536,7 @@ const TIPS = {
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.2s ease-out;
   }
   .drawer-overlay.open { opacity: 1; pointer-events: auto; }
   .drawer {
@@ -538,11 +549,12 @@ const TIPS = {
     border-left: 1px solid #2a2a2a;
     z-index: 101;
     transform: translateX(100%);
-    transition: transform 0.3s;
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     overflow-y: auto;
     padding: 1.5rem;
   }
   .drawer.open { transform: translateX(0); }
+  .drawer:not(.open) { transition-duration: 0.2s; }
   .drawer-close {
     position: absolute;
     top: 0.5rem;
@@ -597,6 +609,10 @@ const TIPS = {
     border-radius: 6px;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    text-align: left;
   }
   :global(.size-option:hover) { border-color: #444; }
   :global(.size-option.selected) {
@@ -605,7 +621,8 @@ const TIPS = {
   }
   :global(.size-option.sold-out) { opacity: 0.4; pointer-events: none; }
   :global(.size-label) { color: #fff; font-size: 0.95rem; }
-  :global(.size-edition) { color: #666; font-size: 0.75rem; margin-top: 0.15rem; }
+  :global(.size-edition) { display: block; color: #8a8a8a; font-size: 0.75rem; margin-top: 0.15rem; }
+  :global(.size-label) { display: block; }
   :global(.size-price) { color: var(--color-accent); font-size: 1rem; font-weight: 600; }
   :global(.sold-out-badge) {
     background: #331111;
@@ -626,11 +643,12 @@ const TIPS = {
     font-weight: 600;
     cursor: pointer;
     text-align: center;
-    transition: background 0.2s;
+    transition: border-color 150ms ease, transform 160ms ease-out;
     margin-bottom: 1rem;
   }
   .checkout-btn:hover { background: linear-gradient(135deg, #2a2420, #3a3228); border-color: #666; }
   .checkout-btn:disabled { opacity: 0.4; pointer-events: none; }
+  .checkout-btn:active, .btn:active, :global(.size-option:active) { transform: scale(0.97); }
   .trust-signals { color: var(--color-muted); font-size: 0.75rem; line-height: 1.8; }
   .trust-signals span { display: block; }
 

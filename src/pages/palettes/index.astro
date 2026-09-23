@@ -76,7 +76,7 @@ const collectionLd = {
             />
           </div>
           <div class="card-body">
-            <h3>{fmtSlug(p.location_slug)}</h3>
+            <h2>{fmtSlug(p.location_slug)}</h2>
             <div class="swatches" title="Median-cut quantization from Sentinel-2 at 10 m ground resolution">
               {p.colors.map((c) => <span class="swatch" style={`background:${c}`} title={c}></span>)}
             </div>
@@ -91,7 +91,7 @@ const collectionLd = {
 
 <style>
   h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
-  h3 { font-size: 0.95rem; margin: 0 0 0.4rem; color: #fff; text-transform: capitalize; }
+  h2 { font-size: 0.95rem; margin: 0 0 0.4rem; color: #fff; text-transform: capitalize; }
   .lede { max-width: 60ch; margin: 0 0 2rem; }
   .empty { color: var(--color-muted); padding: 2rem 0; }
 

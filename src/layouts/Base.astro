@@ -98,6 +98,7 @@ if (socialMeta && !resolvedOgImage) {
     <slot name="head" />
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <header class="hdr">
       <a class="hdr-home" href={import.meta.env.BASE_URL}>
         <span class="hdr-mark">art.jt</span>
@@ -128,7 +129,7 @@ if (socialMeta && !resolvedOgImage) {
         <span></span><span></span><span></span>
       </button>
     </header>
-    <main>
+    <main id="main">
       <slot />
     </main>
     <footer class="ftr">
@@ -160,7 +161,7 @@ if (socialMeta && !resolvedOgImage) {
         nav button is shorthand for "open search anywhere on the site". */}
     <div class="search-modal" data-search-modal hidden>
       <div class="search-backdrop" data-search-close></div>
-      <div class="search-panel" role="dialog" aria-label="Search">
+      <div class="search-panel" role="dialog" aria-modal="true" aria-label="Search">
         <button class="search-close" data-search-close aria-label="Close">×</button>
         <div id="nav-search"></div>
       </div>
@@ -273,7 +274,9 @@ if (socialMeta && !resolvedOgImage) {
           mounted = true;
         }
 
+        let opener = null;
         async function open() {
+          opener = document.activeElement;
           modal.hidden = false;
           await mount();
           // Focus the input once mounted
@@ -282,7 +285,17 @@ if (socialMeta && !resolvedOgImage) {
         }
         function close() {
           modal.hidden = true;
+          if (opener && opener.focus) opener.focus();
         }
+        // Keep Tab inside the open search dialog.
+        modal.addEventListener("keydown", (e) => {
+          if (e.key !== "Tab" || modal.hidden) return;
+          const f = [...modal.querySelectorAll('a[href], button, input, [tabindex]:not([tabindex="-1"])')].filter((el) => el.offsetParent !== null);
+          if (!f.length) return;
+          const first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
 
         document.addEventListener("click", (e) => {
           const hdr = document.querySelector(".hdr");
@@ -560,13 +573,12 @@ if (socialMeta && !resolvedOgImage) {
         min-width: 0;
         min-height: 44px;
         background: #0e0e1a;
-        border: 1px solid #2a2a3e;
+        border: 1px solid #626278;
         color: var(--color-fg);
         font: inherit;
         font-size: 1rem;
         padding: 0.55rem 0.75rem;
         border-radius: 6px;
-        outline: none;
       }
       .ftr-subscribe input[type="email"]:focus {
         border-color: var(--color-accent);

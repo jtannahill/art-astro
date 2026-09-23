@@ -96,15 +96,17 @@ export function pieceSeoTitle(artistDisplay: string, slug: string, date: string)
   const { region } = placeFromSlug(slug);
   const when = formatDateShort(date);
   return fitTitle([
-    `${artistDisplay} Weather Art — ${region} | art.jt`,
-    `${lastName(artistDisplay)} Weather Art — ${region} | art.jt`,
-    `${lastName(artistDisplay)} — ${region} | art.jt`,
-    `${lastName(artistDisplay)} — ${region} ${when} | art.jt`,
+    `${artistDisplay} Weather Art: ${region} | art.jt`,
+    `${lastName(artistDisplay)} Weather Art: ${region} | art.jt`,
+    `${lastName(artistDisplay)}: ${region} | art.jt`,
+    `${lastName(artistDisplay)}: ${region} ${when} | art.jt`,
   ]);
 }
 
 export function pieceH1(slug: string): string {
-  return placeFromSlug(slug).region;
+  // Unnamed grid cells come through as the placeholder "Region"; name them by their coordinates.
+  const p = placeFromSlug(slug);
+  return p.region === "Region" && p.coords ? `Region ${p.coords}` : p.region;
 }
 
 export function pieceMetaDescription(rationale: string, artistDisplay: string, slug: string, date: string): string {
@@ -133,8 +135,8 @@ export function paletteSeoDescription(slug: string, sampleCount: number): string
 export function artistSeoTitle(display: string, pieceCount: number): string {
   const n = `${pieceCount} ${pieceCount === 1 ? "Piece" : "Pieces"}`;
   return fitTitle([
-    `${display} Weather Art — ${n} | art.jt`,
-    `${lastName(display)} Weather Art — ${n} | art.jt`,
+    `${display} Weather Art: ${n} | art.jt`,
+    `${lastName(display)} Weather Art: ${n} | art.jt`,
     `${display} Weather Art | art.jt`,
   ]);
 }
