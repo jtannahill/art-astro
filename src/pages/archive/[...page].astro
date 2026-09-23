@@ -133,17 +133,18 @@ const collectionLd = {
       use /search/ for cross-page queries. */}
   <div class="filter-bar" data-archive-filter>
     <div class="chip-row">
-      <button type="button" class="chip active" data-artist="*">All artists</button>
+      <button type="button" class="chip active" data-artist="*" aria-pressed="true">All artists</button>
       {pageArtists.map((a) => (
-        <button type="button" class="chip" data-artist={a.slug}>{a.name}</button>
+        <button type="button" class="chip" data-artist={a.slug} aria-pressed="false">{a.name}</button>
       ))}
     </div>
     <label class="slider-row">
       <span>min quality</span>
       <input type="range" min="0" max="10" step="1" value="0" data-min-score />
       <span class="slider-val" data-slider-val>0</span>
-      <span class="slider-shown" data-shown></span>
+      <span class="slider-shown" data-shown aria-live="polite"></span>
     </label>
+    <p class="muted" data-empty hidden>No pieces on this page match these filters.</p>
   </div>
 
   {
@@ -164,7 +165,7 @@ const collectionLd = {
             >
               <Thumb
                 base={p.preview_url.replace(/\/preview-2048\.png$/, "")}
-                alt={`${p.slug} (${fmtArtist(p.artist)})`}
+                alt=""
                 viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
               />
               <div class="card-body">
@@ -207,6 +208,8 @@ const collectionLd = {
           if (ok) visible++;
         });
         shown.textContent = ` · ${visible} shown`;
+        const empty = document.querySelector("[data-empty]");
+        if (empty) empty.hidden = visible > 0;
         // Hide an entire run if every card is filtered out
         runs.forEach((r) => {
           const anyVisible = !!r.querySelector('.card[data-artist]:not([style*="display: none"])');
@@ -217,7 +220,10 @@ const collectionLd = {
       chips.forEach((chip) => {
         chip.addEventListener("click", () => {
           activeArtist = chip.dataset.artist || "*";
-          chips.forEach((c) => c.classList.toggle("active", c === chip));
+          chips.forEach((c) => {
+            c.classList.toggle("active", c === chip);
+            c.setAttribute("aria-pressed", c === chip ? "true" : "false");
+          });
           apply();
         });
       });
@@ -343,6 +349,7 @@ const collectionLd = {
   }
   .slider-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem;
     font-size: 0.78rem;

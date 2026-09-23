@@ -124,7 +124,7 @@ const breadcrumb = {
       <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
         <Thumb
           base={`${PROD}/weather/${p.run_id}/${p.slug}`}
-          alt={`${p.slug} weather artwork`}
+          alt=""
           viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
         />
         <span class="card-title">{pretty(p.slug)}</span>

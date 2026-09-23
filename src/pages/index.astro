@@ -82,6 +82,7 @@ const dropdownArtists = ARTISTS.map((a) => ({
 }));
 
 const heroPiece = todaysPieces[0];
+const selectedArtist = dropdownArtists.find((a) => a.key === heroPiece?.artist) ?? dropdownArtists[0];
 const heroBase = heroPiece
   ? `${PROD}/weather/${heroPiece.run_id}/${heroPiece.slug}`
   : null;
@@ -192,7 +193,7 @@ const websiteLd = {
               Everything below stays lazy. */}
           <Thumb
             base={`${PROD}/weather/${p.run_id}/${p.slug}`}
-            alt={`${p.slug} weather art`}
+            alt=""
             loading={heroPiece && i === 0 ? "lazy" : i === 0 ? "eager" : "lazy"}
             viewTransitionName={heroPiece && i === 0 ? undefined : `art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
           />
@@ -227,7 +228,7 @@ const websiteLd = {
       <span class="spinner"></span>
       Generate
     </button>
-    <a id="artist-link" href={dropdownArtists[0].link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
+    <a id="artist-link" href={selectedArtist.link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
   </div>
   <div class="gen-check cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="compact"></div>
   <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -289,6 +290,8 @@ const websiteLd = {
         return;
       }
       btn.classList.add("loading");
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
       const artist = sel.value;
       fetch(TRIGGER_URL, {
         method: "POST",
@@ -309,7 +312,11 @@ const websiteLd = {
           }
         })
         .catch(() => flash("Unable to start generation. Check your connection and try again.", 6000))
-        .finally(() => setTimeout(() => btn.classList.remove("loading"), 1200));
+        .finally(() => setTimeout(() => {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+        }, 1200));
     });
   }
 </script>

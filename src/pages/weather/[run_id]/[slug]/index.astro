@@ -306,10 +306,10 @@ const TIPS = {
   <div class="drawer-overlay" data-drawer-overlay></div>
   <aside class="drawer" data-drawer role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
     <button class="drawer-close" data-drawer-close aria-label="Close print options">×</button>
-    <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt={piece.slug} loading="lazy" decoding="async" width={w} height={h} />
+    <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt="" loading="lazy" decoding="async" width={w} height={h} />
     <h3 class="drawer-title" id="drawer-title">{title}</h3>
     <p class="drawer-sub">{artistName} · {piece.date}</p>
-    <div class="size-options" data-size-options>
+    <div class="size-options" data-size-options aria-live="polite">
       <p class="muted">Loading sizes...</p>
     </div>
     <button class="checkout-btn" data-checkout disabled>Select a size</button>
@@ -406,6 +406,9 @@ const TIPS = {
                 '</span>';
               sizeBox.appendChild(div);
             });
+            if (!sizeBox.children.length) {
+              sizeBox.innerHTML = '<p class="size-error">Prints are not available for this piece yet.</p>';
+            }
           })
           .catch((err) => {
             clearTimeout(timer);
@@ -447,11 +450,22 @@ const TIPS = {
             if (data.url) {
               window.location.href = data.url;
             } else {
-              checkoutBtn.textContent = data.error === "sold_out" ? "Sold Out" : "Error - try again";
-              setTimeout(() => {
-                checkoutBtn.disabled = false;
-                checkoutBtn.textContent = "Checkout";
-              }, 3000);
+              if (data.error === "sold_out") {
+                // That size is gone: clear the choice and reload the edition counts.
+                checkoutBtn.textContent = "That size just sold out";
+                selectedSize = null;
+                editionsLoaded = false;
+                setTimeout(() => {
+                  checkoutBtn.textContent = "Select a size";
+                  loadEditions();
+                }, 2000);
+              } else {
+                checkoutBtn.textContent = "Error - try again";
+                setTimeout(() => {
+                  checkoutBtn.disabled = false;
+                  checkoutBtn.textContent = "Checkout";
+                }, 3000);
+              }
             }
           })
           .catch(() => {
