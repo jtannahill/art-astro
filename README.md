@@ -35,7 +35,7 @@ daily at 07:17 UTC, after the upstream pipeline, and on manual
    search index
 4. `scripts/backfill-thumbs.py` (via `uv run`): generates any WebP
    variants the resize Lambda has not written yet. Never fails the deploy.
-5. `aws s3 sync ./dist/ s3://art-generator-216890068001/site/` in two
+5. `aws s3 sync ./dist/` to the `site/` prefix of the S3 bucket, in two
    passes: HTML and data with a 5-minute cache, `_astro/*` and images as
    immutable (no `--delete`: preserves pipeline-written PNG/WebP/SVG assets)
 6. `aws cloudfront create-invalidation --paths "/*"`
@@ -159,26 +159,26 @@ and the rules below. Current behavior worth knowing before editing:
   `art-satellite-ingest` → `art-palette-extract` →
   (`art-image-resize` triggers on each PNG) → `art-site-rebuild` (asset
   mirror) → this repo's Astro build (manual or push-triggered).
-- **CloudFront**: distribution `E1ZBBUI25FIV7`, origin path `/site/`.
-- **S3**: bucket `art-generator-216890068001`. Astro publishes to `site/`,
+- **CloudFront**: one distribution with origin path `/site/`.
+- **S3**: the shared `art-generator` S3 bucket behind CloudFront. Astro publishes to `site/`,
   pipeline writes pieces under `weather/` + `palettes/`, mirror copies them.
-- **IAM**: deploy user `art-astro-ci` with scoped `s3:*Object` on
+- **IAM**: a dedicated CI deploy user with scoped `s3:*Object` on
   `site/*`, `dynamodb:Scan` on `art-generator`, and
   `cloudfront:CreateInvalidation` on the distro.
 - **Security headers**: CloudFront response headers policy
-  `art-jamestannahill-security-csp` (`b0f5a2be-b280-4be9-a7a6-beace6435a22`),
-  mirrored in `infra/response-headers-policy.json`. The CSP is the source of
+  `art-jamestannahill-security-csp`, mirrored in `infra/response-headers-policy.json`. The CSP is the source of
   truth for which third-party hosts the site may load: Mapbox, Google Fonts
   (`style-src` + `font-src`), and Google Analytics (`script-src` for
   googletagmanager, `connect-src` + `img-src` for the collect endpoints).
   Adding a third-party script without adding it here means it silently
-  never runs. To apply a change:
+  never runs. To apply a change (`POLICY_ID` is that policy's ID, from
+  `aws cloudfront list-response-headers-policies --type custom`):
 
   ```sh
   aws cloudfront update-response-headers-policy \
-    --id b0f5a2be-b280-4be9-a7a6-beace6435a22 \
+    --id "$POLICY_ID" \
     --if-match "$(aws cloudfront get-response-headers-policy-config \
-      --id b0f5a2be-b280-4be9-a7a6-beace6435a22 --query ETag --output text)" \
+      --id "$POLICY_ID" --query ETag --output text)" \
     --response-headers-policy-config file://infra/response-headers-policy.json
   ```
 
@@ -201,8 +201,7 @@ CloudFront, not Cloudflare.
 
 CloudFront only populates `CloudFront-Viewer-*` headers when a policy asks
 for them, so the default behavior uses cache policy
-`art-caching-optimized-viewer-country` (`9d91c828-d53e-4b3a-acbe-b98272eb9e30`,
-mirrored in `infra/cache-policy.json`) rather than the managed
+`art-caching-optimized-viewer-country` (mirrored in `infra/cache-policy.json`) rather than the managed
 CachingOptimized policy. It is CachingOptimized plus that one header, which
 means the header is part of the cache key and pages cache per country.
 Reverting to a policy without the header silently makes the banner show to
