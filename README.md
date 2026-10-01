@@ -115,7 +115,7 @@ src/
     about.astro         /about/
     archive/[...page].astro    Paginated /archive/ (12 pages of 8 runs each)
     artist/index.astro          /artist/ index (artist-card mosaic)
-    artist/[key]/index.astro    Per-artist gallery + methodology block
+    artist/[key]/[...page].astro  Per-artist gallery (60/page) + methodology block
     weather/[run_id]/           Per-run page
     weather/[run_id]/[slug]/    Single-piece page + print drawer (~2,700 of these)
     palettes/                   /palettes/ + per-location detail

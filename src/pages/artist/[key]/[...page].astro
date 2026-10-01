@@ -1,48 +1,50 @@
 ---
-import type { GetStaticPaths } from "astro";
-import { getCollection } from "astro:content";
+/**
+ * Per-artist gallery, paginated like /archive/. Page 1 stays at
+ * /artist/{key}/ and carries the methodology block; later pages are
+ * noindex and kept out of the sitemap (sitemap-policy.mjs).
+ */
+import type { GetStaticPaths, Page } from "astro";
 import Base from "../../../layouts/Base.astro";
 import Methodology from "../../../components/Methodology.astro";
 import Thumb from "../../../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY, LORA_METHODOLOGY } from "../../../data/artists.ts";
-import { artistSeoTitle } from "../../../lib/seo.ts";
+import { piecesFor } from "../../../lib/pieces.ts";
+import { artistSeoTitle, formatCoords, pieceH1 } from "../../../lib/seo.ts";
 
-export const getStaticPaths: GetStaticPaths = () =>
-  ARTISTS.map((a) => ({ params: { key: a.key } }));
+export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
+  const pages = await Promise.all(
+    ARTISTS.map(async (a) => paginate(await piecesFor(a.key), { pageSize: 60, params: { key: a.key } }))
+  );
+  return pages.flat();
+};
 
+type Piece = Awaited<ReturnType<typeof piecesFor>>[number];
+const { page } = Astro.props as { page: Page<Piece> };
 const { key } = Astro.params;
 if (!key || !(key in ARTISTS_BY_KEY)) {
   return Astro.rewrite("/404/");
 }
 const artist = ARTISTS_BY_KEY[key];
-const methodology = LORA_METHODOLOGY[key];
-
-const all = await getCollection("weather");
-const pieces = all
-  .filter((w) => w.data.artist === key)
-  .map((w) => ({
-    run_id: w.data.run_id,
-    slug: w.data.slug,
-    rationale: w.data.rationale,
-    temp: w.data.temp,
-    wind_speed: w.data.wind_speed,
-    pressure: w.data.pressure,
-    quality_score: w.data.quality_score,
-  }))
-  .sort((a, b) => (b.run_id ?? "").localeCompare(a.run_id ?? ""));
+const methodology = page.currentPage === 1 ? LORA_METHODOLOGY[key] : undefined;
+const pieces = page.data;
+const total = page.total;
 
 const PROD = "https://art.jamestannahill.com";
-
-function fmtSlug(slug: string) {
-  return slug.replace(/-/g, " ");
-}
 ---
 
 <Base
-  title={artistSeoTitle(artist.display, pieces.length)}
-  description={`Generative weather art through the lens of ${artist.display}. ${pieces.length} pieces in the archive.`}
-  canonicalPath={`/artist/${key}/`}
+<Base
+  title={page.currentPage === 1 ? artistSeoTitle(artist.display, total) : `${artist.display} Weather Art, page ${page.currentPage} | art.jt`}
+  description={`Generative weather art through the lens of ${artist.display}. ${total} pieces in the archive.`}
+  canonicalPath={page.currentPage === 1 ? `/artist/${key}/` : undefined}
+  robots={page.currentPage > 1 ? "noindex, follow" : undefined}
 >
+  <Fragment slot="head">
+    {page.url.prev && <link rel="prev" href={page.url.prev} />}
+    {page.url.next && <link rel="next" href={page.url.next} />}
+  </Fragment>
+
   <header class="artist-head">
     <h1>{artist.display}</h1>
     <p class="muted">
@@ -62,7 +64,9 @@ function fmtSlug(slug: string) {
   <section class="gallery">
     <header class="gallery-head">
       <h2>Gallery</h2>
-      <span class="muted">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</span>
+      <span class="muted">
+        {total} {total === 1 ? "piece" : "pieces"}{page.lastPage > 1 && `, page ${page.currentPage} of ${page.lastPage}`}
+      </span>
     </header>
 
     {pieces.length === 0 ? (
@@ -77,8 +81,9 @@ function fmtSlug(slug: string) {
               viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
             />
             <div class="card-body">
-              <h3>{fmtSlug(p.slug)}</h3>
+              <h3>{pieceH1(p.slug)}</h3>
               <p class="env">
+                {formatCoords(p.lat, p.lng) && <span>{formatCoords(p.lat, p.lng)}</span>}
                 {p.temp != null && <span>{p.temp.toFixed(1)}°C</span>}
                 {p.wind_speed != null && <span>{p.wind_speed.toFixed(1)} m/s</span>}
                 {p.pressure != null && <span>{p.pressure.toFixed(0)} hPa</span>}
@@ -87,6 +92,20 @@ function fmtSlug(slug: string) {
           </a>
         ))}
       </div>
+    )}
+
+    {page.lastPage > 1 && (
+      <nav class="pager" aria-label="Gallery pages">
+        {page.url.first && page.url.first !== page.url.current && (
+          <a href={page.url.first}>« first</a>
+        )}
+        {page.url.prev && <a href={page.url.prev} rel="prev">‹ prev</a>}
+        <span class="muted">page {page.currentPage} / {page.lastPage}</span>
+        {page.url.next && <a href={page.url.next} rel="next">next ›</a>}
+        {page.url.last && page.url.last !== page.url.current && (
+          <a href={page.url.last}>last »</a>
+        )}
+      </nav>
     )}
   </section>
 </Base>
@@ -108,11 +127,17 @@ function fmtSlug(slug: string) {
     padding-bottom: 0.4rem;
     margin: 1rem 0;
   }
-  h2 { font-size: 0.95rem; margin: 0; font-family: var(--font-mono); }
+  h2 {
+    font-size: 0.85rem;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+  }
   h3 {
     font-size: 0.9rem;
     margin: 0 0 0.25rem;
-    color: #fff;
+    color: var(--color-fg);
     text-transform: capitalize;
   }
   .empty { color: var(--color-muted); padding: 2rem 0; }
@@ -124,8 +149,8 @@ function fmtSlug(slug: string) {
   }
   .card {
     display: block;
-    background: #111;
-    border: 1px solid #1f1f1f;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 8px;
     overflow: hidden;
     color: inherit;
@@ -157,4 +182,28 @@ function fmtSlug(slug: string) {
     flex-wrap: wrap;
     gap: 0.4rem 0.6rem;
   }
+
+  .pager {
+    margin: 3rem 0 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .pager a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-link);
+    text-decoration: none;
+  }
+  .pager a:hover { border-color: #444; background: #1a1a2e; }
 </style>

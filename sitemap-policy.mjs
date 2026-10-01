@@ -1,7 +1,7 @@
 /**
  * Which built URLs belong in sitemap-0.xml.
  * Keep hubs + the last WEATHER_DAYS of pieces. Drop search, empty studies,
- * archive pagination, JSON endpoints, and older weather URLs that were
+ * archive and artist-gallery pagination, JSON endpoints, and older weather URLs that were
  * burning crawl budget (3,038 URLs, today's piece unknown to Google).
  */
 export const WEATHER_DAYS = 14;
@@ -18,6 +18,7 @@ export function shouldIncludeInSitemap(url, now = Date.now()) {
   if (path === "/search/" || path.startsWith("/search/")) return false;
   if (path === "/studies/" || path.startsWith("/studies/")) return false;
   if (/^\/archive\/\d+\/$/.test(path)) return false;
+  if (/^\/artist\/[^/]+\/\d+\/$/.test(path)) return false;
 
   const piece = path.match(/^\/weather\/([^/]+)\/([^/]+)\/$/);
   if (piece) return isRecentRun(piece[1], now);

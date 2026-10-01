@@ -9,6 +9,7 @@ import {
   pieceH1,
   pieceSeoTitle,
   placeFromSlug,
+  sanitizeCopy,
   sanitizeRationale,
 } from "./seo.ts";
 
@@ -98,6 +99,7 @@ describe("shouldIncludeInSitemap", () => {
     assert.equal(shouldIncludeInSitemap(u("/search/"), now), false);
     assert.equal(shouldIncludeInSitemap(u("/studies/"), now), false);
     assert.equal(shouldIncludeInSitemap(u("/archive/2/"), now), false);
+    assert.equal(shouldIncludeInSitemap(u("/artist/sam_francis/2/"), now), false);
     assert.equal(shouldIncludeInSitemap(u("/api/artists.json"), now), false);
   });
 
@@ -128,4 +130,9 @@ it("pieceH1 names unnamed grid cells by their coordinates", () => {
 
 it("piece titles use no em-dash", () => {
   assert.ok(!pieceSeoTitle("Sam Francis", "central-asia-30n-70e", "2026-09-23").includes("\u2014"));
+});
+
+it("generated copy loses em and en dashes", () => {
+  assert.equal(sanitizeRationale("calm air \u2014 then a front"), "calm air, then a front");
+  assert.equal(sanitizeCopy("cold\u2013dry light"), "cold, dry light");
 });

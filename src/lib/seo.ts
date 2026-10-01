@@ -58,6 +58,14 @@ export function placeFromSlug(slug: string): { region: string; coords: string } 
   return { region: region || titleCase(slug), coords };
 }
 
+/** Lat/lng as the piece lede shows it: "30°N, 70°E". */
+export function formatCoords(lat?: number, lng?: number): string {
+  if (lat == null || lng == null) return "";
+  const ns = lat >= 0 ? "N" : "S";
+  const ew = lng >= 0 ? "E" : "W";
+  return `${Math.abs(lat).toFixed(0)}°${ns}, ${Math.abs(lng).toFixed(0)}°${ew}`;
+}
+
 export function paletteDisplayName(slug: string): string {
   return PALETTE_NAMES[slug] ?? titleCase(slug);
 }
@@ -157,6 +165,12 @@ const C_MAX = 60;
 const HPA_MIN = 300;
 const HPA_MAX = 1100;
 
+/** House style: generated copy carries no em or en dashes. */
+export function sanitizeCopy(text: string): string {
+  if (!text) return text;
+  return text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
+}
+
 /** Fix Kelvin/Pascal mislabels in stored rationale (same rules as the Lambda). */
 export function sanitizeRationale(text: string): string {
   if (!text) return text;
@@ -172,5 +186,6 @@ export function sanitizeRationale(text: string): string {
     const v = Number(n);
     return v >= HPA_MIN && v <= HPA_MAX ? `${n} hPa` : full;
   });
+  out = sanitizeCopy(out);
   return out.replace(/\s{2,}/g, " ").trim();
 }

@@ -6,7 +6,7 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../../layouts/Base.astro";
-import { paletteDisplayName, paletteSeoDescription, paletteSeoTitle } from "../../../lib/seo.ts";
+import { paletteDisplayName, paletteSeoDescription, paletteSeoTitle, sanitizeCopy } from "../../../lib/seo.ts";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const all = await getCollection("palettes");
@@ -79,7 +79,7 @@ function fmtCoords(lat?: number, lng?: number) {
           <ul class="hex-list">
             {s.colors.map((c) => <li class="mono">{c}</li>)}
           </ul>
-          {s.mood && <p class="mood">{s.mood}</p>}
+          {s.mood && <p class="mood">{sanitizeCopy(s.mood)}</p>}
         </div>
       </article>
     ))}
@@ -99,7 +99,7 @@ function fmtCoords(lat?: number, lng?: number) {
   }
   .crumbs a { color: var(--color-link); }
   h1.cap { font-size: 2rem; margin: 0 0 0.25rem; letter-spacing: -0.02em; text-transform: capitalize; }
-  h2 { font-size: 0.9rem; margin: 0 0 0.25rem; color: #fff; font-family: var(--font-mono); }
+  h2 { font-size: 0.9rem; margin: 0 0 0.25rem; color: var(--color-fg); font-family: var(--font-mono); }
   .lede { margin: 0 0 2rem; }
 
   .grid {
@@ -108,8 +108,8 @@ function fmtCoords(lat?: number, lng?: number) {
     gap: 1rem;
   }
   .card {
-    background: #111;
-    border: 1px solid #1f1f1f;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 8px;
     overflow: hidden;
   }
@@ -142,14 +142,14 @@ function fmtCoords(lat?: number, lng?: number) {
     gap: 0.4rem;
   }
   .hex-list li {
-    color: #ccc;
+    color: var(--color-text-body);
     font-size: 0.7rem;
     padding: 0.1rem 0.4rem;
     background: #181818;
     border-radius: 3px;
   }
   .mood {
-    color: #ccc;
+    color: var(--color-text-body);
     font-size: 0.85rem;
     line-height: 1.5;
     font-style: italic;

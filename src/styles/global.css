@@ -5,6 +5,14 @@
   --color-border: #2a2a2a;
   --color-accent: #c9a66b;
   --color-link: #9eb8a8;
+  /* Repeated literals, named as-is. Neutral surfaces are canonical; the
+     blue-tinted one is kept only where it already appears. */
+  --color-surface: #111111;
+  --color-border-subtle: #1f1f1f;
+  --color-text-body: #cccccc;
+  --color-surface-blue: #141428;
+  --color-success: #4ade80;
+  --color-error: #ff8b8b;
   --font-sans: "Newsreader", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -44,10 +52,16 @@ input, select, textarea, button {
 }
 .skip-link {
   position: absolute; left: 1rem; top: -3rem; z-index: 200;
-  padding: 0.6rem 1rem; background: #111; color: var(--color-accent);
+  padding: 0.6rem 1rem; background: var(--color-surface); color: var(--color-accent);
   border: 1px solid var(--color-accent); border-radius: 6px;
 }
 .skip-link:focus { top: 1rem; }
+
+/* The browser default ring is ~3:1 on this ground; gold reads at 8.6:1. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 0s !important; }
@@ -58,7 +72,7 @@ h1 { line-height: 1.15; }
 h2 { line-height: 1.3; }
 
 @media (prefers-reduced-transparency: reduce) {
-  .hdr { background: #0a0a0f !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .hdr { background: var(--color-bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
   .search-backdrop { background: rgba(5, 5, 12, 0.94) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 }
 

@@ -13,6 +13,7 @@ import type { GetStaticPaths, Page } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Thumb from "../../components/Thumb.astro";
+import { formatCoords, pieceH1 } from "../../lib/seo.ts";
 
 interface RunGroup {
   run_id: string;
@@ -27,6 +28,8 @@ interface PieceMeta {
   rationale: string;
   preview_url: string;
   page_url: string;
+  lat?: number;
+  lng?: number;
   temp?: number;
   wind_speed?: number;
   pressure?: number;
@@ -59,6 +62,8 @@ export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
           rationale: w.data.rationale,
           preview_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
           page_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/`,
+          lat: w.data.lat,
+          lng: w.data.lng,
           temp: w.data.temp,
           wind_speed: w.data.wind_speed,
           pressure: w.data.pressure,
@@ -120,6 +125,8 @@ const collectionLd = {
 >
   <Fragment slot="head">
     <script type="application/ld+json" set:html={JSON.stringify(collectionLd)} />
+    {page.url.prev && <link rel="prev" href={page.url.prev} />}
+    {page.url.next && <link rel="next" href={page.url.next} />}
   </Fragment>
 
   <h1>Archive</h1>
@@ -169,9 +176,10 @@ const collectionLd = {
                 viewTransitionName={`art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
               />
               <div class="card-body">
-                <h3>{p.slug.replace(/-/g, " ")}</h3>
+                <h3>{pieceH1(p.slug)}</h3>
                 <p class="meta">{fmtArtist(p.artist)}</p>
                 <p class="env">
+                  {formatCoords(p.lat, p.lng) && <span>{formatCoords(p.lat, p.lng)}</span>}
                   {p.temp != null && <span>{p.temp.toFixed(1)}&deg;C</span>}
                   {p.wind_speed != null && <span>{p.wind_speed.toFixed(1)} m/s</span>}
                   {p.pressure != null && <span>{p.pressure.toFixed(0)} hPa</span>}
@@ -207,7 +215,7 @@ const collectionLd = {
           c.style.display = ok ? "" : "none";
           if (ok) visible++;
         });
-        shown.textContent = ` · ${visible} shown`;
+        shown.textContent = `${visible} shown`;
         const empty = document.querySelector("[data-empty]");
         if (empty) empty.hidden = visible > 0;
         // Hide an entire run if every card is filtered out
@@ -236,9 +244,9 @@ const collectionLd = {
     {page.url.first && page.url.first !== page.url.current && (
       <a href={page.url.first}>« first</a>
     )}
-    {page.url.prev && <a href={page.url.prev}>‹ prev</a>}
+    {page.url.prev && <a href={page.url.prev} rel="prev">‹ prev</a>}
     <span class="muted">page {page.currentPage} / {page.lastPage}</span>
-    {page.url.next && <a href={page.url.next}>next ›</a>}
+    {page.url.next && <a href={page.url.next} rel="next">next ›</a>}
     {page.url.last && page.url.last !== page.url.current && (
       <a href={page.url.last}>last »</a>
     )}
@@ -258,7 +266,7 @@ const collectionLd = {
   h3 {
     font-size: 0.95rem;
     margin: 0 0 0.25rem;
-    color: #fff;
+    color: var(--color-fg);
     text-transform: capitalize;
   }
   .run { margin: 2.5rem 0; }
@@ -278,8 +286,8 @@ const collectionLd = {
   }
   .card {
     display: block;
-    background: #111;
-    border: 1px solid #1f1f1f;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 8px;
     overflow: hidden;
     color: inherit;
@@ -320,8 +328,8 @@ const collectionLd = {
   .filter-bar {
     margin: 1.5rem 0 2rem;
     padding: 1rem 1.25rem;
-    background: #111;
-    border: 1px solid #1f1f1f;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 8px;
   }
   .chip-row {
@@ -334,8 +342,8 @@ const collectionLd = {
     min-height: 44px;
     padding: 0.45rem 0.85rem;
     background: #181818;
-    color: #ccc;
-    border: 1px solid #2a2a2a;
+    color: var(--color-text-body);
+    border: 1px solid var(--color-border);
     border-radius: 999px;
     font-size: 0.85rem;
     cursor: pointer;
@@ -362,8 +370,8 @@ const collectionLd = {
     min-height: 44px;
     accent-color: var(--color-accent);
   }
-  .slider-val { color: #fff; font-family: var(--font-mono); min-width: 1.5em; }
-  .slider-shown { color: var(--color-muted); font-size: 0.75rem; }
+  .slider-val { color: var(--color-fg); font-family: var(--font-mono); min-width: 1.5em; }
+  .slider-shown { color: var(--color-muted); font-size: 0.75rem; margin-left: auto; }
 
   .pager {
     margin: 3rem 0 1rem;
@@ -382,7 +390,7 @@ const collectionLd = {
     display: inline-flex;
     align-items: center;
     padding: 0.4rem 0.9rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     color: var(--color-link);
     text-decoration: none;

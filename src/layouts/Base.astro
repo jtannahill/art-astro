@@ -32,6 +32,18 @@ const canonical = canonicalPath
   ? new URL(canonicalPath, Astro.site).toString()
   : new URL(Astro.url.pathname, Astro.site).toString();
 
+const NAV = [
+  { href: "/archive/", label: "Archive" },
+  { href: "/artist/", label: "Artists" },
+  { href: "/palettes/", label: "Palettes" },
+  { href: "/map/", label: "Map" },
+  { href: "/about/", label: "About" },
+];
+const path = Astro.url.pathname;
+const homeHref = import.meta.env.BASE_URL;
+// Home matches exactly; sections match their whole subtree.
+const current = (href: string) => (href === homeHref ? path === href : path.startsWith(href));
+
 // Default og:image: the strongest piece from the newest run in the
 // build-time data snapshot. preview-1200.webp is the social-card-sized
 // variant (~150-250 KB vs the 1.7 MB 2048 PNG).
@@ -100,15 +112,13 @@ if (socialMeta && !resolvedOgImage) {
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="hdr">
-      <a class="hdr-home" href={import.meta.env.BASE_URL}>
+      <a class="hdr-home" href={homeHref} aria-current={current(homeHref) ? "page" : undefined}>
         <span class="hdr-mark">art.jt</span>
       </a>
       <nav class="top-nav" id="site-nav">
-        <a href="/archive/">Archive</a>
-        <a href="/artist/">Artists</a>
-        <a href="/palettes/">Palettes</a>
-        <a href="/map/">Map</a>
-        <a href="/about/">About</a>
+        {NAV.map((n) => (
+          <a href={n.href} aria-current={current(n.href) ? "page" : undefined}>{n.label}</a>
+        ))}
       </nav>
       <button class="nav-search-trigger" type="button" data-search-trigger aria-label="Search" title="Search (⌘K)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -391,6 +401,7 @@ if (socialMeta && !resolvedOgImage) {
         padding: 0 0.55rem;
       }
       .top-nav a:hover { color: var(--color-link); }
+      .top-nav a[aria-current="page"] { color: var(--color-fg); }
 
       .nav-toggle {
         display: none;
@@ -399,7 +410,7 @@ if (socialMeta && !resolvedOgImage) {
         padding: 0;
         border: 1px solid #2a2a3e;
         border-radius: 8px;
-        background: #141428;
+        background: var(--color-surface-blue);
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -424,7 +435,7 @@ if (socialMeta && !resolvedOgImage) {
         gap: 0.5rem;
         min-height: 44px;
         padding: 0 0.75rem 0 0.65rem;
-        background: #141428;
+        background: var(--color-surface-blue);
         border: 1px solid #2a2a3e;
         border-radius: 999px;
         color: var(--color-muted);
@@ -445,7 +456,7 @@ if (socialMeta && !resolvedOgImage) {
         font-family: var(--font-mono);
         font-size: 0.65rem;
         padding: 1px 5px;
-        background: #0a0a0f;
+        background: var(--color-bg);
         border: 1px solid #2a2a3e;
         border-radius: 4px;
         color: var(--color-muted);
@@ -529,7 +540,7 @@ if (socialMeta && !resolvedOgImage) {
         height: 44px;
         padding: 0;
       }
-      .search-close:hover { color: #fff; }
+      .search-close:hover { color: var(--color-fg); }
 
       /* Pagefind UI theming inside the modal - match dark monochrome */
       .search-panel :global(.pagefind-ui) {
@@ -591,6 +602,10 @@ if (socialMeta && !resolvedOgImage) {
         padding: 0.55rem 0.75rem;
         border-radius: 6px;
       }
+      .ftr-subscribe input[type="email"]::placeholder {
+        color: var(--color-muted);
+        opacity: 1;
+      }
       .ftr-subscribe input[type="email"]:focus {
         border-color: var(--color-accent);
       }
@@ -623,8 +638,8 @@ if (socialMeta && !resolvedOgImage) {
         flex-basis: 100%;
         min-height: 1.1em;
       }
-      .ftr-sub-msg.ok { color: #4ade80; }
-      .ftr-sub-msg.err { color: #ff8b8b; }
+      .ftr-sub-msg.ok { color: var(--color-success); }
+      .ftr-sub-msg.err { color: var(--color-error); }
       .ftr-meta { margin: 0; }
     </style>
     <ConsentBanner />

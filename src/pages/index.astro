@@ -11,7 +11,8 @@ import Base from "../layouts/Base.astro";
 import Thumb from "../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
-import { placeFromSlug, pieceH1 } from "../lib/seo.ts";
+import { pieceDims } from "../lib/pieces.ts";
+import { formatCoords as coords, pieceH1, sanitizeCopy } from "../lib/seo.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
@@ -40,8 +41,11 @@ const todaysPieces = allWeather
     quality_score: w.data.quality_score,
     lat: w.data.lat,
     lng: w.data.lng,
+    dims: pieceDims(w.data),
   }))
   .sort((a, b) => (b.quality_score ?? 0) - (a.quality_score ?? 0));
+// Three full rows on the desktop grid; the archive link covers the rest.
+const gridPieces = todaysPieces.slice(0, 9);
 
 // One latest palette per location, then take the freshest 8
 const byLocation = new Map<string, (typeof allPalettes)[number]>();
@@ -58,7 +62,7 @@ const latestPalettes = [...byLocation.values()]
     location_slug: p.data.location_slug,
     date: p.data.date,
     colors: p.data.colors,
-    mood: p.data.mood,
+    mood: sanitizeCopy(p.data.mood),
   }));
 
 function fmtArtist(slug: string) {
@@ -66,10 +70,6 @@ function fmtArtist(slug: string) {
 }
 function fmtSlug(slug: string) {
   return slug.replace(/-/g, " ");
-}
-function coords(lat?: number, lng?: number) {
-  if (lat == null || lng == null) return "";
-  return `${Math.abs(lat).toFixed(0)}°${lat >= 0 ? "N" : "S"}, ${Math.abs(lng).toFixed(0)}°${lng >= 0 ? "E" : "W"}`;
 }
 function paletteThumb(location_slug: string, date: string) {
   return `${PROD}/palettes/${date}/${location_slug}/source-thumb.jpg`;
@@ -131,6 +131,9 @@ const websiteLd = {
         loading="eager"
         fetchpriority="high"
         sizes="(max-width: 720px) 100vw, 720px"
+        square={false}
+        width={heroPiece.dims[0]}
+        height={heroPiece.dims[1]}
         viewTransitionName={`art-${heroPiece.run_id.replace(/-/g, "")}-${heroPiece.slug.replace(/-/g, "")}`}
       />
       <div class="hero-cap">
@@ -187,7 +190,7 @@ const websiteLd = {
     <p class="empty">No weather art generated yet today. Check back soon.</p>
   ) : (
     <div class="grid">
-      {todaysPieces.map((p, i) => (
+      {gridPieces.map((p, i) => (
         <a class="card" href={`/weather/${p.run_id}/${p.slug}/`}>
           {/* First card is the LCP candidate: eager + high priority.
               Everything below stays lazy. */}
@@ -198,7 +201,7 @@ const websiteLd = {
             viewTransitionName={heroPiece && i === 0 ? undefined : `art-${p.run_id.replace(/-/g, "")}-${p.slug.replace(/-/g, "")}`}
           />
           <div class="card-body">
-            <h3>{fmtSlug(p.slug)}</h3>
+            <h3>{pieceH1(p.slug)}</h3>
             <p class="meta">{coords(p.lat, p.lng)}</p>
             <p class="artist-line">{fmtArtist(p.artist)}</p>
             <p class="env">
@@ -230,8 +233,33 @@ const websiteLd = {
     </button>
     <a id="artist-link" href={selectedArtist.link} target="_blank" rel="noopener" class="artist-link">about this artist ↗</a>
   </div>
-  <div class="gen-check cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="compact"></div>
-  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <div
+    class="gen-check cf-turnstile"
+    data-sitekey={TURNSTILE_SITE_KEY}
+    data-theme="dark"
+    data-size="compact"
+    data-error-callback="genCheckFailed"
+  ></div>
+  <p class="gen-check-err" data-gen-check-err role="status" hidden>
+    The verification check could not load, so Generate is unavailable. Reload the page or try again later.
+  </p>
+  <script is:inline>
+    // Swap the empty check slot for a message when Turnstile cannot load
+    // (script blocked or failed) or reports an error.
+    window.genCheckFailed = function () {
+      var slot = document.querySelector(".gen-check");
+      var err = document.querySelector("[data-gen-check-err]");
+      if (slot) slot.hidden = true;
+      if (err) err.hidden = false;
+    };
+  </script>
+  <script
+    is:inline
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    async
+    defer
+    onerror="window.genCheckFailed && window.genCheckFailed()"
+  ></script>
 
   <h2>Latest palettes</h2>
   {latestPalettes.length === 0 ? (
@@ -284,7 +312,12 @@ const websiteLd = {
   }
   if (btn && sel) {
     btn.addEventListener("click", () => {
-      const token = window.turnstile ? window.turnstile.getResponse() : "";
+      if (!window.turnstile) {
+        if (window.genCheckFailed) window.genCheckFailed();
+        flash("The verification check could not load. Reload the page or try again later.");
+        return;
+      }
+      const token = window.turnstile.getResponse();
       if (!token) {
         flash("Please complete the check below the Generate button first");
         return;
@@ -332,7 +365,7 @@ const websiteLd = {
     margin: 0 0 1.25rem;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid #1f1f1f;
+    border: 1px solid var(--color-border-subtle);
     background: #0a0a0a;
     color: inherit;
   }
@@ -345,9 +378,9 @@ const websiteLd = {
     font-size: 0.85rem;
     color: var(--color-muted);
   }
-  .hero-cap strong { color: #fff; font-weight: 600; }
+  .hero-cap strong { color: var(--color-fg); font-weight: 600; }
   h2 { font-size: 1.1rem; margin: 3rem 0 1rem; letter-spacing: -0.01em; }
-  h3 { font-size: 0.9rem; margin: 0 0 0.25rem; color: #fff; text-transform: capitalize; }
+  h3 { font-size: 0.9rem; margin: 0 0 0.25rem; color: var(--color-fg); text-transform: capitalize; }
 
   .how {
     margin: 2rem 0;
@@ -357,7 +390,7 @@ const websiteLd = {
     border-radius: 12px;
   }
   .how h2 { margin: 0 0 0.25rem; font-size: 0.85rem; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.15em; }
-  .how-lede { color: #ccc; font-size: 0.95rem; margin: 0 0 1rem; }
+  .how-lede { color: var(--color-text-body); font-size: 0.95rem; margin: 0 0 1rem; }
   .how-grid {
     list-style: none;
     margin: 0;
@@ -373,7 +406,7 @@ const websiteLd = {
     padding: 0.5rem 0;
     border-top: 1px solid #1f1f33;
   }
-  .how-grid .ix { color: #fff; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em; }
+  .how-grid .ix { color: var(--color-fg); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em; }
   .how-grid .ax { color: var(--color-accent); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
   .how-grid .copy { color: var(--color-muted); font-size: 0.8rem; line-height: 1.5; margin-top: 0.15rem; }
   .todays-h { margin-top: 3rem; }
@@ -385,7 +418,7 @@ const websiteLd = {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    background: linear-gradient(135deg, #0f0f1a 0%, #141428 100%);
+    background: linear-gradient(135deg, #0f0f1a 0%, var(--color-surface-blue) 100%);
     border: 1px solid #2a2a3e;
     border-radius: 12px;
     flex-wrap: wrap;
@@ -398,12 +431,13 @@ const websiteLd = {
     letter-spacing: 0.5px;
   }
   .gen-check { margin: 0.5rem 0 0; min-height: 65px; }
+  .gen-check-err { color: var(--color-error); font-size: 0.85rem; margin: 0.5rem 0 0; }
   .artist-bar select {
     flex: 1;
     min-width: 160px;
     min-height: 44px;
     background: transparent;
-    color: #fff;
+    color: var(--color-fg);
     border: none;
     font-size: 1.05rem;
     font-weight: 600;
@@ -415,7 +449,7 @@ const websiteLd = {
     background-repeat: no-repeat;
     background-position: right 0 center;
   }
-  .artist-bar select option { background: #141428; color: #fff; }
+  .artist-bar select option { background: var(--color-surface-blue); color: var(--color-fg); }
   .gen-btn {
     display: inline-flex;
     align-items: center;
@@ -453,6 +487,9 @@ const websiteLd = {
     font-size: 0.75rem;
     color: var(--color-muted);
     transition: color 0.2s;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
   .artist-link:hover { color: var(--color-link); }
 
@@ -464,8 +501,8 @@ const websiteLd = {
   }
   .card {
     display: block;
-    background: #111;
-    border: 1px solid #1f1f1f;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-subtle);
     border-radius: 8px;
     overflow: hidden;
     color: inherit;
@@ -527,7 +564,7 @@ const websiteLd = {
     align-items: center;
     min-height: 44px;
     padding: 0.55rem 1.25rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     color: var(--color-link);
     font-size: 0.9rem;
@@ -559,7 +596,6 @@ const websiteLd = {
     .artist-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
     .artist-bar label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .gen-btn { justify-content: center; width: 100%; }
-    .artist-link { min-height: 44px; display: inline-flex; align-items: center; }
     .grid { grid-template-columns: 1fr; }
   }
 </style>

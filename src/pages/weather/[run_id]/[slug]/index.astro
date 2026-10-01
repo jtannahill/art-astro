@@ -3,7 +3,9 @@ import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../../../layouts/Base.astro";
 import { ARTISTS_BY_KEY } from "../../../../data/artists.ts";
+import { pieceDims } from "../../../../lib/pieces.ts";
 import {
+  formatCoords as coords,
   pieceH1,
   pieceMetaDescription,
   pieceSeoTitle,
@@ -37,25 +39,22 @@ const svgUrl = `${assetBase}/artwork.svg`;
 const artist = ARTISTS_BY_KEY[piece.artist];
 const artistName = artist?.display ?? piece.artist.replace(/_/g, " ");
 
-function coords(lat?: number, lng?: number) {
-  if (lat == null || lng == null) return "";
-  const ns = lat >= 0 ? "N" : "S";
-  const ew = lng >= 0 ? "E" : "W";
-  return `${Math.abs(lat).toFixed(0)}°${ns}, ${Math.abs(lng).toFixed(0)}°${ew}`;
-}
-
 const place = placeFromSlug(piece.slug);
 const title = pieceH1(piece.slug);
 const rationale = sanitizeRationale(piece.rationale || "");
 const description = pieceMetaDescription(rationale, artistName, piece.slug, piece.date);
 const seoTitle = pieceSeoTitle(artistName, piece.slug, piece.date);
 
-const [w, h] = (piece.canvas_format || "2048x2048").split("x");
+// Real preview size, not canvas_format: the renderers return their own
+// aspect, and a wrong ratio here shifts the layout when the hero loads.
+const [w, h] = pieceDims(piece);
+// The drawer thumb is preview-480.webp, always 480 wide.
+const thumbH = Math.round((480 * h) / w);
 
 const visualArtwork = {
   "@context": "https://schema.org",
   "@type": "VisualArtwork",
-  name: `${title} weather art after ${artistName} — ${piece.date}`,
+  name: `${title} weather art after ${artistName}, ${piece.date}`,
   description: rationale || description,
   url: `${PROD}/weather/${piece.run_id}/${piece.slug}/`,
   image: previewUrl,
@@ -121,7 +120,7 @@ const TIPS = {
 };
 ---
 
-{/* socialMeta={false}: this page emits its own og:/twitter: tags below —
+{/* socialMeta={false}: this page emits its own og:/twitter: tags below;
     the Base defaults would duplicate them. */}
 <Base title={seoTitle} description={description} canonicalPath={`/weather/${piece.run_id}/${piece.slug}/`} socialMeta={false}>
   <Fragment slot="head">
@@ -163,7 +162,7 @@ const TIPS = {
   <span data-pagefind-filter={`artist:${artistName}`} hidden>{artistName}</span>
   <span data-pagefind-filter={`year:${piece.date.slice(0, 4)}`} hidden>{piece.date.slice(0, 4)}</span>
 
-  <figure class="hero">
+  <figure class="hero" style={`--ar: ${w} / ${h};`}>
     {/* WebP srcset keeps the LCP hero under ~200 KB; the 2048 PNG
         (~1.7 MB) remains the fallback for any piece missing variants. */}
     <picture>
@@ -306,13 +305,15 @@ const TIPS = {
   <div class="drawer-overlay" data-drawer-overlay></div>
   <aside class="drawer" data-drawer role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
     <button class="drawer-close" data-drawer-close aria-label="Close print options">×</button>
-    <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt="" loading="lazy" decoding="async" width={w} height={h} />
+    <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt="" loading="lazy" decoding="async" width="480" height={thumbH} />
     <h3 class="drawer-title" id="drawer-title">{title}</h3>
     <p class="drawer-sub">{artistName} · {piece.date}</p>
     <div class="size-options" data-size-options aria-live="polite">
       <p class="muted">Loading sizes...</p>
     </div>
-    <button class="checkout-btn" data-checkout disabled>Select a size</button>
+    <div class="checkout-bar">
+      <button class="checkout-btn" data-checkout disabled>Select a size</button>
+    </div>
     <div class="trust-signals">
       <span>Ships worldwide via theprintspace</span>
       <span>Hahnemühle German Etching 310gsm</span>
@@ -367,7 +368,7 @@ const TIPS = {
 
       function loadEditions() {
         sizeBox.innerHTML = '<p class="size-loading">Loading sizes...</p>';
-        // 12s timeout — print-shop Lambda's cold start can stretch
+        // 12s timeout: the print-shop Lambda's cold start can stretch
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 12000);
         fetch(
@@ -499,11 +500,19 @@ const TIPS = {
   .lede { font-size: 0.95rem; margin: 0 0 1.5rem; }
   .lede a { color: var(--color-accent); display: inline-block; padding: 0.35rem 0; min-height: 44px; line-height: 1.4; }
 
+  /* Cap the hero so a whole portrait piece fits on one screen; 9rem
+     covers the header and breathing room, and Buy print follows directly
+     below. Capping harder to lift the button above the fold shrank portrait
+     art to ~285px wide at 1440x900, too small for a gallery. The frame
+     shrinks to the art and centers on the page ground; --ar (real preview
+     ratio) keeps the width definite before load. */
   figure.hero {
-    margin: 0 0 1.5rem;
+    width: min(100%, calc((100vh - 9rem) * var(--ar, 1)));
+    width: min(100%, calc((100dvh - 9rem) * var(--ar, 1)));
+    margin: 0 auto 1.5rem;
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid #1f1f1f;
+    border: 1px solid var(--color-border-subtle);
     background: #0a0a0a;
   }
   figure.hero img {
@@ -524,15 +533,15 @@ const TIPS = {
     justify-content: center;
     min-height: 44px;
     padding: 0.5rem 1rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     color: #ddd;
     text-decoration: none;
     font-size: 0.85rem;
-    background: #111;
+    background: var(--color-surface);
     transition: border-color 0.15s, color 0.15s, transform 160ms ease-out;
   }
-  .btn:hover { border-color: #444; color: #fff; text-decoration: none; }
+  .btn:hover { border-color: #444; color: var(--color-fg); text-decoration: none; }
   .btn.primary {
     background: linear-gradient(135deg, #2a2218, #1a1814);
     border-color: #c9a66b55;
@@ -546,7 +555,8 @@ const TIPS = {
     line-height: 1.2;
   }
   .btn.primary .sub { font-size: 0.65rem; opacity: 0.7; font-weight: 400; }
-  .btn.ghost { opacity: 0.6; }
+  .btn.ghost { color: var(--color-muted); border-color: var(--color-border-subtle); }
+  .btn.ghost:hover { color: var(--color-fg); border-color: #444; }
 
   /* Print drawer.
      The size-option / size-label / size-edition / size-price / selected /
@@ -570,7 +580,7 @@ const TIPS = {
     bottom: 0;
     width: min(420px, 90vw);
     background: #0d0d0d;
-    border-left: 1px solid #2a2a2a;
+    border-left: 1px solid var(--color-border);
     z-index: 101;
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
@@ -597,10 +607,11 @@ const TIPS = {
     width: 44px;
     height: 44px;
   }
-  .drawer-close:hover { color: #fff; }
+  .drawer-close:hover { color: var(--color-fg); }
   .drawer-thumb {
-    width: 100%;
-    max-width: 200px;
+    width: auto;
+    max-width: min(200px, 100%);
+    max-height: 28vh;
     /* The height attribute is a presentational hint; without an author
        height it applies literally and stretches the thumb. */
     height: auto;
@@ -608,7 +619,7 @@ const TIPS = {
     margin: 0 auto 1rem;
     border-radius: 4px;
   }
-  .drawer-title { color: #fff; font-size: 1.1rem; margin: 0 0 0.3rem; }
+  .drawer-title { color: var(--color-fg); font-size: 1.1rem; margin: 0 0 0.3rem; }
   .drawer-sub { color: var(--color-muted); font-size: 0.85rem; margin: 0 0 1.5rem; text-transform: capitalize; }
   .size-options {
     display: flex;
@@ -616,7 +627,7 @@ const TIPS = {
     gap: 0.75rem;
     margin-bottom: 1.5rem;
   }
-  :global(.size-error) { color: #ff8b8b; font-size: 0.9rem; padding: 0.5rem 0 0.25rem; margin: 0; }
+  :global(.size-error) { color: var(--color-error); font-size: 0.9rem; padding: 0.5rem 0 0.25rem; margin: 0; }
   :global(.size-loading) { color: var(--color-muted); font-size: 0.9rem; padding: 0.5rem 0; margin: 0; }
   :global(.size-retry) {
     background: #1a1a2e;
@@ -636,7 +647,7 @@ const TIPS = {
     align-items: center;
     padding: 0.75rem 1rem;
     background: #141414;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
@@ -651,7 +662,7 @@ const TIPS = {
     background: #1a1814;
   }
   :global(.size-option.sold-out) { opacity: 0.4; pointer-events: none; }
-  :global(.size-label) { color: #fff; font-size: 0.95rem; }
+  :global(.size-label) { color: var(--color-fg); font-size: 0.95rem; }
   :global(.size-edition) { display: block; color: #8a8a8a; font-size: 0.75rem; margin-top: 0.15rem; }
   :global(.size-label) { display: block; }
   :global(.size-price) { color: var(--color-accent); font-size: 1rem; font-weight: 600; }
@@ -675,7 +686,27 @@ const TIPS = {
     cursor: pointer;
     text-align: center;
     transition: border-color 150ms ease, transform 160ms ease-out;
-    margin-bottom: 1rem;
+  }
+  /* Keeps Checkout in view after a size is picked, however tall the size
+     list gets. A solid fade from the drawer ground, no shadow. The negative
+     inset cancels the drawer's bottom padding so the bar sits flush. */
+  .checkout-bar {
+    position: sticky;
+    bottom: -1.5rem;
+    z-index: 1;
+    background: #0d0d0d;
+    padding: 0.5rem 0 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .checkout-bar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 1.5rem;
+    background: linear-gradient(to bottom, rgba(13, 13, 13, 0), #0d0d0d);
+    pointer-events: none;
   }
   .checkout-btn:hover { background: linear-gradient(135deg, #2a2420, #3a3228); border-color: #666; }
   .checkout-btn:disabled { opacity: 0.4; pointer-events: none; }
@@ -686,12 +717,12 @@ const TIPS = {
   .rationale {
     margin: 0 0 2rem;
     padding: 1rem 1.25rem;
-    background: #111;
-    border: 1px solid #2a2a2a;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
   }
   .rationale h2 { font-size: 0.85rem; margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-muted); }
-  .rationale p { color: #ccc; line-height: 1.7; margin: 0; }
+  .rationale p { color: var(--color-text-body); line-height: 1.7; margin: 0; }
 
   .meta { margin: 0 0 2rem; }
   .meta h2 {
@@ -712,7 +743,7 @@ const TIPS = {
   }
   .meta dt { color: var(--color-muted); margin: 0; }
   .meta dt span[title] { border-bottom: 1px dotted var(--color-muted); cursor: help; }
-  .meta dd { margin: 0; color: #ccc; }
+  .meta dd { margin: 0; color: var(--color-text-body); }
   .meta dd a { color: var(--color-link); }
 
   .license {
@@ -740,10 +771,15 @@ const TIPS = {
       max-height: min(88vh, 720px);
       transform: translateY(100%);
       border-left: none;
-      border-top: 1px solid #2a2a2a;
+      border-top: 1px solid var(--color-border);
       border-radius: 16px 16px 0 0;
       padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
     }
     .drawer.open { transform: translateY(0); }
+    .checkout-bar {
+      bottom: calc(-1 * max(1.5rem, env(safe-area-inset-bottom)));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    figure.hero { width: 100%; }
   }
 </style>

@@ -26,6 +26,10 @@ interface Props {
   viewTransitionName?: string;
   /** Aspect-ratio class to apply to the wrapper. */
   square?: boolean;
+  /** Real preview size. Only matters when square is false; square crops
+   *  are sized by the wrapper. */
+  width?: number;
+  height?: number;
 }
 
 const {
@@ -36,6 +40,8 @@ const {
   sizes = "(max-width: 540px) 50vw, (max-width: 900px) 33vw, 240px",
   viewTransitionName,
   square = true,
+  width = 1024,
+  height = 1024,
 } = Astro.props;
 
 const png = `${base}/preview-2048.png`;
@@ -58,8 +64,8 @@ const webp1920 = `${base}/preview-1920.webp`;
     loading={loading}
     fetchpriority={fetchpriority}
     decoding="async"
-    width="1024"
-    height="1024"
+    width={width}
+    height={height}
     data-vt={viewTransitionName}
   />
 </picture>
@@ -77,5 +83,11 @@ const webp1920 = `${base}/preview-1920.webp`;
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+  /* Uncropped: the whole piece, capped to the viewport. */
+  .thumb-pic:not(.square) img {
+    height: auto;
+    max-height: 80vh;
+    object-fit: contain;
   }
 </style>
