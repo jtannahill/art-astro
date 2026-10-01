@@ -131,7 +131,7 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
           (isPalette
             ? '<div class="map-pop-sub">satellite palette</div>'
             : '<div class="map-pop-sub is-art">' + (p.artist || "") + '</div>') +
-          '<a class="map-pop-link" href="' + p.url + '">view →</a>' +
+          '<a class="map-pop-link" href="' + p.url + '">' + (isPalette ? "View palette" : "View piece") + '</a>' +
           '</div></div>'
         );
       }

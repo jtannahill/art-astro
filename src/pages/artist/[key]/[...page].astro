@@ -96,13 +96,13 @@ const PROD = "https://art.jamestannahill.com";
     {page.lastPage > 1 && (
       <nav class="pager" aria-label="Gallery pages">
         {page.url.first && page.url.first !== page.url.current && (
-          <a href={page.url.first}>« first</a>
+          <a href={page.url.first}>First</a>
         )}
-        {page.url.prev && <a href={page.url.prev} rel="prev">‹ prev</a>}
+        {page.url.prev && <a href={page.url.prev} rel="prev">Previous</a>}
         <span class="muted">page {page.currentPage} / {page.lastPage}</span>
-        {page.url.next && <a href={page.url.next} rel="next">next ›</a>}
+        {page.url.next && <a href={page.url.next} rel="next">Next</a>}
         {page.url.last && page.url.last !== page.url.current && (
-          <a href={page.url.last}>last »</a>
+          <a href={page.url.last}>Last</a>
         )}
       </nav>
     )}

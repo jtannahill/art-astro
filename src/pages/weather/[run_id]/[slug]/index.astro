@@ -406,7 +406,7 @@ const TIPS = {
                 '</span>' +
                 '<span>' +
                   (soldOut
-                    ? '<span class="sold-out-badge">Sold Out</span>'
+                    ? '<span class="sold-out-badge">Sold out</span>'
                     : '<span class="size-price">$' + (s.price_cents / 100).toFixed(0) + '</span>') +
                 '</span>';
               sizeBox.appendChild(div);
@@ -420,7 +420,7 @@ const TIPS = {
             const msg =
               err && err.name === "AbortError"
                 ? "Sizes are taking longer than usual."
-                : "Couldn't load sizes.";
+                : "Couldn't load print sizes. Check your connection and retry.";
             sizeBox.innerHTML =
               '<p class="size-error">' + msg + '</p>' +
               '<button type="button" class="size-retry" data-size-retry>Retry</button>';
@@ -445,7 +445,7 @@ const TIPS = {
       // labelled action again, price included.
       function checkoutFailed() {
         checkoutBtn.removeAttribute("aria-busy");
-        checkoutBtn.textContent = "Error - try again";
+        checkoutBtn.textContent = "Checkout failed. Try again.";
         setTimeout(() => {
           if (!selectedSize) return;
           checkoutBtn.disabled = false;

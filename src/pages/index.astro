@@ -12,7 +12,7 @@ import Thumb from "../components/Thumb.astro";
 import { ARTISTS, ARTISTS_BY_KEY } from "../data/artists.ts";
 import { TOTAL_ARTISTS, LORA_ARTIST_COUNT } from "../data/counts.ts";
 import { pieceDims } from "../lib/pieces.ts";
-import { formatCoords as coords, pieceH1, sanitizeCopy } from "../lib/seo.ts";
+import { formatCoords as coords, paletteDisplayName, pieceH1, sanitizeCopy } from "../lib/seo.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const TRIGGER_URL = "https://sggzeske3z3l4cy7rc3jyw6bm40nkbzp.lambda-url.us-east-1.on.aws";
@@ -269,7 +269,7 @@ const websiteLd = {
       {latestPalettes.map((p) => (
         <a class="card palette-card" href={`/palettes/${p.location_slug}/`}>
           <div class="thumb">
-            <img src={paletteThumb(p.location_slug, p.date)} alt={`${p.location_slug} satellite`} loading="lazy" decoding="async" width="512" height="512" />
+            <img src={paletteThumb(p.location_slug, p.date)} alt={`${paletteDisplayName(p.location_slug)} satellite image`} loading="lazy" decoding="async" width="512" height="512" />
           </div>
           <div class="card-body">
             <h3>{fmtSlug(p.location_slug)}</h3>

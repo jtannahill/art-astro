@@ -149,7 +149,7 @@ const collectionLd = {
       ))}
     </div>
     <label class="slider-row">
-      <span>min quality</span>
+      <span>Minimum quality</span>
       <input type="range" min="0" max="10" step="1" value="0" data-min-score />
       <span class="slider-val" data-slider-val>0</span>
       <span class="slider-shown" data-shown aria-live="polite"></span>
@@ -244,13 +244,13 @@ const collectionLd = {
 
   <nav class="pager">
     {page.url.first && page.url.first !== page.url.current && (
-      <a href={page.url.first}>« first</a>
+      <a href={page.url.first}>First</a>
     )}
-    {page.url.prev && <a href={page.url.prev} rel="prev">‹ prev</a>}
+    {page.url.prev && <a href={page.url.prev} rel="prev">Previous</a>}
     <span class="muted">page {page.currentPage} / {page.lastPage}</span>
-    {page.url.next && <a href={page.url.next} rel="next">next ›</a>}
+    {page.url.next && <a href={page.url.next} rel="next">Next</a>}
     {page.url.last && page.url.last !== page.url.current && (
-      <a href={page.url.last}>last »</a>
+      <a href={page.url.last}>Last</a>
     )}
   </nav>
 </Base>
