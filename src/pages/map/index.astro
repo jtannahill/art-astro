@@ -9,6 +9,7 @@
 import { getCollection } from "astro:content";
 import { PUBLIC_MAPBOX_TOKEN } from "astro:env/client";
 import Base from "../../layouts/Base.astro";
+import { ARTISTS_BY_KEY } from "../../data/artists.ts";
 
 const PROD = "https://art.jamestannahill.com";
 const MAPBOX_TOKEN = PUBLIC_MAPBOX_TOKEN;
@@ -38,7 +39,7 @@ const weatherMarkers: MarkerW[] = allWeather
     lat: w.data.lat!,
     lng: w.data.lng!,
     title: w.data.slug.replace(/-/g, " "),
-    artist: w.data.artist,
+    artist: ARTISTS_BY_KEY[w.data.artist]?.display ?? w.data.artist.replace(/_/g, " "),
     url: `/weather/${w.data.run_id}/${w.data.slug}/`,
     // 480px WebP (~10-45 KB) — popups are ~260px wide; the 2048 PNG
     // here used to cost ~1.7 MB per marker click.
@@ -74,7 +75,10 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
     {weatherMarkers.length} weather pins · {paletteMarkers.length} palette pins.
   </p>
 
-  <div id="map" class="map"></div>
+  <div id="map" class="map" role="region" aria-label="World map of artwork and palette locations"></div>
+  <p class="map-fail muted" data-map-fail hidden>
+    The map could not load. Every piece is still listed in the <a href="/archive/">archive</a>.
+  </p>
 
   <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" />
   <script
@@ -86,8 +90,15 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
     is:inline
     define:vars={{ MAPBOX_TOKEN, weatherMarkers, paletteMarkers }}
   >
+    let waited = 0;
     function init() {
       if (typeof mapboxgl === "undefined") {
+        // Give the CDN script ~10s, then say so instead of an empty frame.
+        if ((waited += 60) > 10000) {
+          const fail = document.querySelector("[data-map-fail]");
+          if (fail) fail.hidden = false;
+          return;
+        }
         setTimeout(init, 60);
         return;
       }
@@ -109,17 +120,18 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
         });
       });
 
+      // Styled by the .map-pop rules below, in the site serif.
       function popupHtml(p) {
         const isPalette = p.kind === "p";
         return (
-          '<div style="font-family:-apple-system,sans-serif;color:#ccc;background:#0a0a0a;border-radius:6px;overflow:hidden;width:200px;">' +
-          '<img src="' + p.img + '" loading="lazy" style="width:100%;display:block;background:#000;aspect-ratio:1;object-fit:cover;">' +
-          '<div style="padding:0.5rem 0.75rem;">' +
-          '<div style="font-size:0.85rem;color:#fff;text-transform:capitalize;margin-bottom:0.2rem;">' + p.title + '</div>' +
+          '<div class="map-pop">' +
+          '<img src="' + p.img + '" alt="" loading="lazy" width="200" height="200">' +
+          '<div class="map-pop-body">' +
+          '<div class="map-pop-title">' + p.title + '</div>' +
           (isPalette
-            ? '<div style="font-size:0.7rem;color:#888;">satellite palette</div>'
-            : '<div style="font-size:0.7rem;color:#c9a66b;">' + (p.artist || "").replace(/_/g, " ") + '</div>') +
-          '<a href="' + p.url + '" style="display:inline-block;margin-top:0.4rem;font-size:0.75rem;color:#9eb8a8;">view →</a>' +
+            ? '<div class="map-pop-sub">satellite palette</div>'
+            : '<div class="map-pop-sub is-art">' + (p.artist || "") + '</div>') +
+          '<a class="map-pop-link" href="' + p.url + '">view →</a>' +
           '</div></div>'
         );
       }
@@ -232,6 +244,39 @@ const paletteMarkers: MarkerP[] = [...latestPerLocation.values()]
     background: #0a0a0a;
     touch-action: none;
   }
+  .map-fail { margin: 1rem 0 0; }
+
+  /* Popup markup is injected by Mapbox outside Astro's scope. */
+  .map :global(.mapboxgl-popup-content) {
+    padding: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: none;
+    overflow: hidden;
+  }
+  .map :global(.mapboxgl-popup-tip) { display: none; }
+  .map :global(.map-pop) { width: 200px; font-family: var(--font-sans); color: var(--color-text-body); }
+  .map :global(.map-pop img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #0a0a0a;
+  }
+  .map :global(.map-pop-body) { padding: 0.5rem 0.75rem 0.6rem; }
+  .map :global(.map-pop-title) { font-size: 0.95rem; color: var(--color-fg); text-transform: capitalize; line-height: 1.3; }
+  .map :global(.map-pop-sub) { font-size: 0.8rem; color: var(--color-muted); text-transform: capitalize; }
+  .map :global(.map-pop-sub.is-art) { color: var(--color-accent); text-transform: none; }
+  .map :global(.map-pop-link) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 0.85rem;
+    color: var(--color-link);
+  }
+
   @media (max-width: 720px) {
     .map {
       height: calc(100svh - 14rem);

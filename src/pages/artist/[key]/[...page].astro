@@ -34,7 +34,6 @@ const PROD = "https://art.jamestannahill.com";
 ---
 
 <Base
-<Base
   title={page.currentPage === 1 ? artistSeoTitle(artist.display, total) : `${artist.display} Weather Art, page ${page.currentPage} | art.jt`}
   description={`Generative weather art through the lens of ${artist.display}. ${total} pieces in the archive.`}
   canonicalPath={page.currentPage === 1 ? `/artist/${key}/` : undefined}
@@ -156,16 +155,12 @@ const PROD = "https://art.jamestannahill.com";
     color: inherit;
     transition: transform 0.15s, border-color 0.15s;
   }
-  .card:hover {
-    transform: translateY(-2px);
-    border-color: #333;
-    text-decoration: none;
-  }
-  .thumb {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    background: #0a0a0a;
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: #333;
+      text-decoration: none;
+    }
   }
   .card img {
     width: 100%;
@@ -192,8 +187,8 @@ const PROD = "https://art.jamestannahill.com";
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
   }
   .pager a {
     min-height: 44px;

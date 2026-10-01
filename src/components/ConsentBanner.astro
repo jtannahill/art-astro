@@ -44,10 +44,9 @@
     max-width: 48rem;
     margin: 0 auto;
     padding: 1rem 1.25rem;
-    background: var(--color-bg);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 6px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
   }
 
   .consent-title {
@@ -75,25 +74,33 @@
     gap: 0.75rem;
   }
 
+  /* Same button language as the rest of the site: serif, primary in the
+     warm gold treatment, secondary as a neutral chip. */
   .consent-btn {
     min-height: 44px;
     padding: 0.5rem 1.25rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    border-radius: 6px;
+    font-size: 0.9rem;
     cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s, transform 160ms ease-out;
   }
+  .consent-btn:active { transform: scale(0.97); }
 
   .consent-btn-accept {
-    background: var(--color-accent);
-    border: 1px solid var(--color-accent);
-    color: var(--color-bg);
+    background: linear-gradient(135deg, #2a2218, #1a1814);
+    border: 1px solid #c9a66b55;
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .consent-btn-accept:hover {
+    background: linear-gradient(135deg, #3a3228, #2a2420);
+    border-color: #c9a66b88;
   }
 
   .consent-btn-reject {
-    background: transparent;
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
-    color: var(--color-muted);
+    color: var(--color-text-body);
   }
+  .consent-btn-reject:hover { border-color: #444; color: var(--color-fg); }
 </style>

@@ -20,6 +20,7 @@
 * { box-sizing: border-box; }
 
 html {
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overflow-x: clip;
@@ -76,7 +77,10 @@ h2 { line-height: 1.3; }
   .search-backdrop { background: rgba(5, 5, 12, 0.94) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 }
 
-a { color: var(--color-link); text-decoration: none; }
+::selection { background: rgba(201, 166, 107, 0.35); color: var(--color-fg); }
+input, textarea { caret-color: var(--color-accent); }
+
+a { color: var(--color-link); text-decoration: none; text-underline-offset: 0.18em; }
 a:hover { text-decoration: underline; }
 
 main { display: block; }

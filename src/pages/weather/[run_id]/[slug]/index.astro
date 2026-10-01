@@ -157,10 +157,10 @@ const TIPS = {
   {/* Hidden Pagefind metadata + filters. The page body itself is indexed
        via data-pagefind-body on <main>. These spans give the search index
        structured fields it can return + facet on. */}
-  <span data-pagefind-meta={`artist:${artistName}`} hidden>{artistName}</span>
-  <span data-pagefind-meta={`date:${piece.date}`} hidden>{piece.date}</span>
-  <span data-pagefind-filter={`artist:${artistName}`} hidden>{artistName}</span>
-  <span data-pagefind-filter={`year:${piece.date.slice(0, 4)}`} hidden>{piece.date.slice(0, 4)}</span>
+  <span data-pagefind-meta={`artist:${artistName}`} data-pagefind-ignore hidden>{artistName}</span>
+  <span data-pagefind-meta={`date:${piece.date}`} data-pagefind-ignore hidden>{piece.date}</span>
+  <span data-pagefind-filter={`artist:${artistName}`} data-pagefind-ignore hidden>{artistName}</span>
+  <span data-pagefind-filter={`year:${piece.date.slice(0, 4)}`} data-pagefind-ignore hidden>{piece.date.slice(0, 4)}</span>
 
   <figure class="hero" style={`--ar: ${w} / ${h};`}>
     {/* WebP srcset keeps the LCP hero under ~200 KB; the 2048 PNG
@@ -184,7 +184,7 @@ const TIPS = {
     </picture>
   </figure>
 
-  <div class="actions">
+  <div class="actions" data-pagefind-ignore>
     <button class="btn primary" data-print-open>
       <span>Buy print</span>
       <span class="sub">Limited edition, ships worldwide</span>
@@ -304,15 +304,15 @@ const TIPS = {
        redirect. Same flow as the legacy Jinja2 page. */}
   <div class="drawer-overlay" data-drawer-overlay></div>
   <aside class="drawer" data-drawer role="dialog" aria-modal="true" aria-labelledby="drawer-title" inert>
-    <button class="drawer-close" data-drawer-close aria-label="Close print options">×</button>
+    <button class="drawer-close" type="button" data-drawer-close aria-label="Close print options"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
     <img class="drawer-thumb" src={`${assetBase}/preview-480.webp`} alt="" loading="lazy" decoding="async" width="480" height={thumbH} />
     <h3 class="drawer-title" id="drawer-title">{title}</h3>
     <p class="drawer-sub">{artistName} · {piece.date}</p>
     <div class="size-options" data-size-options aria-live="polite">
       <p class="muted">Loading sizes...</p>
     </div>
-    <div class="checkout-bar">
-      <button class="checkout-btn" data-checkout disabled>Select a size</button>
+    <div class="checkout-bar" aria-live="polite">
+      <button class="checkout-btn" type="button" data-checkout disabled>Select a size</button>
     </div>
     <div class="trust-signals">
       <span>Ships worldwide via theprintspace</span>
@@ -331,7 +331,9 @@ const TIPS = {
       const sizeBox = document.querySelector("[data-size-options]");
       const checkoutBtn = document.querySelector("[data-checkout]");
       let selectedSize = null;
+      let selectedPrice = 0;
       let editionsLoaded = false;
+      const checkoutLabel = () => "Checkout - $" + (selectedPrice / 100).toFixed(0);
 
       let opener = null;
       function open(e) {
@@ -429,6 +431,7 @@ const TIPS = {
 
       function selectSize(key, priceCents) {
         selectedSize = key;
+        selectedPrice = priceCents;
         document.querySelectorAll(".size-option").forEach((el) =>
           {
             el.classList.toggle("selected", el.dataset.size === key);
@@ -436,12 +439,24 @@ const TIPS = {
           }
         );
         checkoutBtn.disabled = false;
-        checkoutBtn.textContent = "Checkout - $" + (priceCents / 100).toFixed(0);
+        checkoutBtn.textContent = checkoutLabel();
+      }
+      // A failed checkout keeps the chosen size and offers the same
+      // labelled action again, price included.
+      function checkoutFailed() {
+        checkoutBtn.removeAttribute("aria-busy");
+        checkoutBtn.textContent = "Error - try again";
+        setTimeout(() => {
+          if (!selectedSize) return;
+          checkoutBtn.disabled = false;
+          checkoutBtn.textContent = checkoutLabel();
+        }, 3000);
       }
 
       checkoutBtn.addEventListener("click", () => {
         if (!selectedSize) return;
         checkoutBtn.disabled = true;
+        checkoutBtn.setAttribute("aria-busy", "true");
         checkoutBtn.textContent = "Redirecting...";
         fetch(PRINT_SHOP_URL + "?action=checkout", {
           method: "POST",
@@ -455,6 +470,7 @@ const TIPS = {
             } else {
               if (data.error === "sold_out") {
                 // That size is gone: clear the choice and reload the edition counts.
+                checkoutBtn.removeAttribute("aria-busy");
                 checkoutBtn.textContent = "That size just sold out";
                 selectedSize = null;
                 editionsLoaded = false;
@@ -463,18 +479,11 @@ const TIPS = {
                   loadEditions();
                 }, 2000);
               } else {
-                checkoutBtn.textContent = "Error - try again";
-                setTimeout(() => {
-                  checkoutBtn.disabled = false;
-                  checkoutBtn.textContent = "Checkout";
-                }, 3000);
+                checkoutFailed();
               }
             }
           })
-          .catch(() => {
-            checkoutBtn.disabled = false;
-            checkoutBtn.textContent = "Error - try again";
-          });
+          .catch(() => checkoutFailed());
       });
     })();
   </script>
@@ -602,10 +611,14 @@ const TIPS = {
     background: none;
     border: none;
     color: var(--color-muted);
-    font-size: 1.5rem;
     cursor: pointer;
     width: 44px;
     height: 44px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
   }
   .drawer-close:hover { color: var(--color-fg); }
   .drawer-thumb {
@@ -620,7 +633,7 @@ const TIPS = {
     border-radius: 4px;
   }
   .drawer-title { color: var(--color-fg); font-size: 1.1rem; margin: 0 0 0.3rem; }
-  .drawer-sub { color: var(--color-muted); font-size: 0.85rem; margin: 0 0 1.5rem; text-transform: capitalize; }
+  .drawer-sub { color: var(--color-muted); font-size: 0.85rem; margin: 0 0 1.5rem; }
   .size-options {
     display: flex;
     flex-direction: column;
@@ -630,9 +643,10 @@ const TIPS = {
   :global(.size-error) { color: var(--color-error); font-size: 0.9rem; padding: 0.5rem 0 0.25rem; margin: 0; }
   :global(.size-loading) { color: var(--color-muted); font-size: 0.9rem; padding: 0.5rem 0; margin: 0; }
   :global(.size-retry) {
-    background: #1a1a2e;
-    border: 1px solid #2a2a3e;
-    color: var(--color-accent);
+    align-self: flex-start;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-body);
     border-radius: 6px;
     padding: 0.3rem 0.8rem;
     min-height: 44px;
@@ -640,7 +654,7 @@ const TIPS = {
     font-size: 0.8rem;
     cursor: pointer;
   }
-  :global(.size-retry:hover) { border-color: var(--color-accent); }
+  :global(.size-retry:hover) { border-color: #444; color: var(--color-fg); }
   :global(.size-option) {
     display: flex !important;
     justify-content: space-between;
@@ -656,19 +670,23 @@ const TIPS = {
     color: inherit;
     text-align: left;
   }
-  :global(.size-option:hover) { border-color: #444; }
+  :global(.size-option:not(:disabled):hover) { border-color: #444; }
   :global(.size-option.selected) {
     border-color: var(--color-accent);
     background: #1a1814;
   }
-  :global(.size-option.sold-out) { opacity: 0.4; pointer-events: none; }
+  :global(.size-option.sold-out) { background: transparent; border-color: var(--color-border-subtle); cursor: not-allowed; }
+  /* Dim the size, not the badge: "Sold out" is the information. */
+  :global(.size-option.sold-out .size-label),
+  :global(.size-option.sold-out .size-edition) { color: #666; }
   :global(.size-label) { color: var(--color-fg); font-size: 0.95rem; }
   :global(.size-edition) { display: block; color: #8a8a8a; font-size: 0.75rem; margin-top: 0.15rem; }
   :global(.size-label) { display: block; }
   :global(.size-price) { color: var(--color-accent); font-size: 1rem; font-weight: 600; }
   :global(.sold-out-badge) {
-    background: #331111;
-    color: #ff6b6b;
+    background: #2a1414;
+    border: 1px solid #5a2a2a;
+    color: var(--color-error);
     font-size: 0.7rem;
     padding: 0.15rem 0.5rem;
     border-radius: 3px;
@@ -710,7 +728,7 @@ const TIPS = {
   }
   .checkout-btn:hover { background: linear-gradient(135deg, #2a2420, #3a3228); border-color: #666; }
   .checkout-btn:disabled { opacity: 0.4; pointer-events: none; }
-  .checkout-btn:active, .btn:active, :global(.size-option:active) { transform: scale(0.97); }
+  .checkout-btn:active, .btn:active, :global(.size-option:not(:disabled):active) { transform: scale(0.97); }
   .trust-signals { color: var(--color-muted); font-size: 0.75rem; line-height: 1.8; }
   .trust-signals span { display: block; }
 

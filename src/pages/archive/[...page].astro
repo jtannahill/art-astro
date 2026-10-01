@@ -13,6 +13,7 @@ import type { GetStaticPaths, Page } from "astro";
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Thumb from "../../components/Thumb.astro";
+import { ARTISTS_BY_KEY } from "../../data/artists.ts";
 import { formatCoords, pieceH1 } from "../../lib/seo.ts";
 
 interface RunGroup {
@@ -61,7 +62,7 @@ export const getStaticPaths: GetStaticPaths = async ({ paginate }) => {
           artist: w.data.artist,
           rationale: w.data.rationale,
           preview_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/preview-2048.png`,
-          page_url: `${PROD}/weather/${w.data.run_id}/${w.data.slug}/`,
+          page_url: `/weather/${w.data.run_id}/${w.data.slug}/`,
           lat: w.data.lat,
           lng: w.data.lng,
           temp: w.data.temp,
@@ -88,11 +89,13 @@ const pageArtists = [...new Set(runs.flatMap((r) => r.pieces.map((p) => p.artist
   .sort()
   .map((slug) => ({
     slug,
-    name: slug.split("_").map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" "),
+    name: fmtArtist(slug),
   }));
 
+// Canonical display names ("Hilma af Klint", "Willem de Kooning"); the
+// title-cased slug is only a fallback for an artist not in the roster.
 function fmtArtist(slug: string) {
-  return slug
+  return ARTISTS_BY_KEY[slug]?.display ?? slug
     .split("_")
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(" ");
@@ -166,7 +169,6 @@ const collectionLd = {
             <a
               class="card"
               href={p.page_url}
-              rel="noopener"
               data-artist={p.artist}
               data-score={p.quality_score ?? 0}
             >
@@ -293,16 +295,12 @@ const collectionLd = {
     color: inherit;
     transition: transform 0.15s, border-color 0.15s;
   }
-  .card:hover {
-    transform: translateY(-2px);
-    border-color: #333;
-    text-decoration: none;
-  }
-  .thumb {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    background: #0a0a0a;
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: #333;
+      text-decoration: none;
+    }
   }
   .card img {
     width: 100%;
@@ -382,8 +380,8 @@ const collectionLd = {
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
   }
   .pager a {
     min-height: 44px;
